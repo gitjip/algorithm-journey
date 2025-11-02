@@ -35,21 +35,29 @@ int main()
 	// }
 
 	// 验证规律
-	for (int n = 1; n <= 50; ++n)
-	{
-		cout << n << " ";
-		if (n % 5 == 2 || n % 5 == 0)
-		{
-			cout << "B\n";
-		}
-		else
-		{
-			cout << "A\n";
-		}
-	}
+	// for (int n = 1; n <= 50; ++n)
+	// {
+	// 	cout << n << " ";
+	// 	if (n % 5 == 2 || n % 5 == 0)
+	// 	{
+	// 		cout << "B\n";
+	// 	}
+	// 	else
+	// 	{
+	// 		cout << "A\n";
+	// 	}
+	// }
 
 	// 答案
-	// int n;
-	// cin>>n;
+	int n;
+	cin >> n;
+	if (n % 5 == 2 || n % 5 == 0)
+	{
+		cout << "B\n";
+	}
+	else
+	{
+		cout << "A\n";
+	}
 	return 0;
 }
