@@ -1,6 +1,14 @@
 package class182;
 
-// 根节点的概率，java版
+// 根节点的取值，java版
+// 一共有n个节点，1号节点是整棵树的头，所有节点组成一棵树
+// 给定一个长度为n的数组arr，如果节点x是叶，那么arr[x]表示点权，所有叶节点的点权都不同
+// 如果节点x不是叶，那么它最多有两个孩子，此时arr[x]代表概率，节点x按照以下规则取得点权
+// 以arr[x]的概率是所有儿子的点权最大值，以1 - arr[x]的概率是所有儿子的点权最小值
+// 表示概率时，arr[x]的范围是[1, 9999]，表示概率 0.0001 ~ 0.9999
+// 假设1号结点的权值有m种可能性，第i小的权值是Vi，取得概率为Di
+// 计算 i = 1..m 时，每一项 (i * Vi * Di * Di) 的累加和，答案对 998244353 取模
+// 1 <= n <= 3 * 10^5    1 <= 叶节点权值 <= 10^9    1 <= 概率 <= 9999
 // 测试链接 : https://www.luogu.com.cn/problem/P5298
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
@@ -18,7 +26,7 @@ public class Code02_Minimax1 {
 	public static int n;
 
 	public static int[] fa = new int[MAXN];
-	public static int[] val = new int[MAXN];
+	public static int[] arr = new int[MAXN];
 	public static int[] sorted = new int[MAXN];
 	public static int cntv;
 
@@ -29,10 +37,10 @@ public class Code02_Minimax1 {
 	public static int[] ls = new int[MAXT];
 	public static int[] rs = new int[MAXT];
 	public static long[] sum = new long[MAXT];
-	public static long[] mul = new long[MAXT];
+	public static long[] mulLazy = new long[MAXT];
 	public static int cntt;
 
-	public static long[] d = new long[MAXN];
+	public static long[] D = new long[MAXN];
 
 	public static long power(long x, int p) {
 		long ans = 1;
@@ -67,15 +75,15 @@ public class Code02_Minimax1 {
 	public static void lazy(int i, long v) {
 		if (i != 0) {
 			sum[i] = sum[i] * v % MOD;
-			mul[i] = mul[i] * v % MOD;
+			mulLazy[i] = mulLazy[i] * v % MOD;
 		}
 	}
 
 	public static void down(int i) {
-		if (mul[i] != 1) {
-			lazy(ls[i], mul[i]);
-			lazy(rs[i], mul[i]);
-			mul[i] = 1;
+		if (mulLazy[i] != 1) {
+			lazy(ls[i], mulLazy[i]);
+			lazy(rs[i], mulLazy[i]);
+			mulLazy[i] = 1;
 		}
 	}
 
@@ -83,7 +91,7 @@ public class Code02_Minimax1 {
 		int rt = i;
 		if (rt == 0) {
 			rt = ++cntt;
-			mul[rt] = 1;
+			mulLazy[rt] = 1;
 		}
 		if (l == r) {
 			sum[rt] = 1;
@@ -116,33 +124,33 @@ public class Code02_Minimax1 {
 			down(t1);
 			down(t2);
 			int mid = (l + r) >> 1;
-			long l1 = (sum1 + sum[rs[t1]] * (1 - p + MOD)) % MOD;
-			long l2 = (sum2 + sum[rs[t2]] * (1 - p + MOD)) % MOD;
-			long r1 = (sum1 + sum[ls[t1]] * p) % MOD;
-			long r2 = (sum2 + sum[ls[t2]] * p) % MOD;
-			ls[t1] = merge(l, mid, ls[t1], ls[t2], p, l1, l2);
-			rs[t1] = merge(mid + 1, r, rs[t1], rs[t2], p, r1, r2);
+			long lsum1 = (sum1 + sum[rs[t1]] * (1 - p + MOD)) % MOD;
+			long lsum2 = (sum2 + sum[rs[t2]] * (1 - p + MOD)) % MOD;
+			long rsum1 = (sum1 + sum[ls[t1]] * p) % MOD;
+			long rsum2 = (sum2 + sum[ls[t2]] * p) % MOD;
+			ls[t1] = merge(l, mid, ls[t1], ls[t2], p, lsum1, lsum2);
+			rs[t1] = merge(mid + 1, r, rs[t1], rs[t2], p, rsum1, rsum2);
 			up(t1);
 		}
 		return t1;
 	}
 
 	// 迭代版，java会爆栈，C++可以通过
-	public static void dfs1(int u) {
+	public static void dp1(int u) {
 		if (sonCnt[u] == 0) {
-			root[u] = insert(val[u], 1, cntv, root[u]);
+			root[u] = insert(arr[u], 1, cntv, root[u]);
 		} else if (sonCnt[u] == 1) {
-			dfs1(son[u][0]);
+			dp1(son[u][0]);
 			root[u] = root[son[u][0]];
 		} else {
-			dfs1(son[u][0]);
-			dfs1(son[u][1]);
-			root[u] = merge(1, cntv, root[son[u][0]], root[son[u][1]], val[u], 0, 0);
+			dp1(son[u][0]);
+			dp1(son[u][1]);
+			root[u] = merge(1, cntv, root[son[u][0]], root[son[u][1]], arr[u], 0, 0);
 		}
 	}
 
-	// dfs1改成迭代版
-	public static void dfs2() {
+	// dp1改成迭代版
+	public static void dp2() {
 		int[][] stack = new int[n + 1][2];
 		int siz = 0;
 		stack[++siz][0] = 1;
@@ -151,7 +159,7 @@ public class Code02_Minimax1 {
 			int u = stack[siz][0];
 			int s = stack[siz--][1];
 			if (sonCnt[u] == 0) {
-				root[u] = insert(val[u], 1, cntv, root[u]);
+				root[u] = insert(arr[u], 1, cntv, root[u]);
 			} else if (sonCnt[u] == 1) {
 				if (s == 0) {
 					stack[++siz][0] = u;
@@ -170,7 +178,7 @@ public class Code02_Minimax1 {
 					stack[++siz][0] = son[u][0];
 					stack[siz][1] = 0;
 				} else {
-					root[u] = merge(1, cntv, root[son[u][0]], root[son[u][1]], val[u], 0, 0);
+					root[u] = merge(1, cntv, root[son[u][0]], root[son[u][1]], arr[u], 0, 0);
 				}
 			}
 		}
@@ -181,7 +189,7 @@ public class Code02_Minimax1 {
 			return;
 		}
 		if (l == r) {
-			d[l] = sum[i] % MOD;
+			D[l] = sum[i] % MOD;
 		} else {
 			down(i);
 			int mid = (l + r) >> 1;
@@ -199,9 +207,9 @@ public class Code02_Minimax1 {
 		long inv = power(10000, MOD - 2);
 		for (int i = 1; i <= n; i++) {
 			if (sonCnt[i] == 0) {
-				sorted[++cntv] = val[i];
+				sorted[++cntv] = arr[i];
 			} else {
-				val[i] = (int) (inv * val[i] % MOD);
+				arr[i] = (int) (inv * arr[i] % MOD);
 			}
 		}
 		Arrays.sort(sorted, 1, cntv + 1);
@@ -214,7 +222,7 @@ public class Code02_Minimax1 {
 		cntv = len;
 		for (int i = 1; i <= n; i++) {
 			if (sonCnt[i] == 0) {
-				val[i] = kth(val[i]);
+				arr[i] = kth(arr[i]);
 			}
 		}
 	}
@@ -227,15 +235,15 @@ public class Code02_Minimax1 {
 			fa[i] = in.nextInt();
 		}
 		for (int i = 1; i <= n; i++) {
-			val[i] = in.nextInt();
+			arr[i] = in.nextInt();
 		}
 		prepare();
-		// dfs1(1);
-		dfs2();
+		// dp1(1);
+		dp2();
 		getd(1, cntv, root[1]);
 		long ans = 0;
 		for (int i = 1; i <= cntv; i++) {
-			ans = (ans + 1L * i * sorted[i] % MOD * d[i] % MOD * d[i]) % MOD;
+			ans = (ans + 1L * i * sorted[i] % MOD * D[i] % MOD * D[i]) % MOD;
 		}
 		out.println(ans);
 		out.flush();

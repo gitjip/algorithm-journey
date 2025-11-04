@@ -1,6 +1,14 @@
 package class182;
 
-// 根节点的概率，C++版
+// 根节点的取值，C++版
+// 一共有n个节点，1号节点是整棵树的头，所有节点组成一棵树
+// 给定一个长度为n的数组arr，如果节点x是叶，那么arr[x]表示点权，所有叶节点的点权都不同
+// 如果节点x不是叶，那么它最多有两个孩子，此时arr[x]代表概率，节点x按照以下规则取得点权
+// 以arr[x]的概率是所有儿子的点权最大值，以1 - arr[x]的概率是所有儿子的点权最小值
+// 表示概率时，arr[x]的范围是[1, 9999]，表示概率 0.0001 ~ 0.9999
+// 假设1号结点的权值有m种可能性，第i小的权值是Vi，取得概率为Di
+// 计算 i = 1..m 时，每一项 (i * Vi * Di * Di) 的累加和，答案对 998244353 取模
+// 1 <= n <= 3 * 10^5    1 <= 叶节点权值 <= 10^9    1 <= 概率 <= 9999
 // 测试链接 : https://www.luogu.com.cn/problem/P5298
 // 如下实现是C++的版本，C++版本和java版本逻辑完全一样
 // 提交如下代码，可以通过所有测试用例
@@ -15,7 +23,7 @@ package class182;
 //int n;
 //
 //int fa[MAXN];
-//int val[MAXN];
+//int arr[MAXN];
 //int sorted[MAXN];
 //int cntv;
 //
@@ -25,12 +33,11 @@ package class182;
 //int root[MAXN];
 //int ls[MAXT];
 //int rs[MAXT];
+//long long sum[MAXT];
+//long long mulLazy[MAXT];
 //int cntt;
 //
-//long long sum[MAXT];
-//long long mul[MAXT];
-//
-//long long d[MAXN];
+//long long D[MAXN];
 //
 //long long power(long long x, int p) {
 //    long long ans = 1;
@@ -59,21 +66,21 @@ package class182;
 //}
 //
 //void up(int i) {
-//	sum[i] = (sum[ls[i]] + sum[rs[i]]) % MOD;
+//    sum[i] = (sum[ls[i]] + sum[rs[i]]) % MOD;
 //}
 //
 //void lazy(int i, long long v) {
 //    if (i) {
-//    	sum[i] = sum[i] * v % MOD;
-//        mul[i] = mul[i] * v % MOD;
+//        sum[i] = sum[i] * v % MOD;
+//        mulLazy[i] = mulLazy[i] * v % MOD;
 //    }
 //}
 //
 //void down(int i) {
-//    if (mul[i] != 1) {
-//        lazy(ls[i], mul[i]);
-//        lazy(rs[i], mul[i]);
-//        mul[i] = 1;
+//    if (mulLazy[i] != 1) {
+//        lazy(ls[i], mulLazy[i]);
+//        lazy(rs[i], mulLazy[i]);
+//        mulLazy[i] = 1;
 //    }
 //}
 //
@@ -81,10 +88,10 @@ package class182;
 //    int rt = i;
 //    if (rt == 0) {
 //        rt = ++cntt;
-//        mul[rt] = 1;
+//        mulLazy[rt] = 1;
 //    }
 //    if (l == r) {
-//    	sum[rt] = 1;
+//        sum[rt] = 1;
 //    } else {
 //        down(rt);
 //        int mid = (l + r) >> 1;
@@ -114,27 +121,27 @@ package class182;
 //        down(t1);
 //        down(t2);
 //        int mid = (l + r) >> 1;
-//        long long l1 = (sum1 + sum[rs[t1]] * (1 - p + MOD)) % MOD;
-//        long long l2 = (sum2 + sum[rs[t2]] * (1 - p + MOD)) % MOD;
-//        long long r1 = (sum1 + sum[ls[t1]] * p) % MOD;
-//        long long r2 = (sum2 + sum[ls[t2]] * p) % MOD;
-//        ls[t1] = merge(l, mid, ls[t1], ls[t2], p, l1, l2);
-//        rs[t1] = merge(mid + 1, r, rs[t1], rs[t2], p, r1, r2);
+//        long long lsum1 = (sum1 + sum[rs[t1]] * (1 - p + MOD)) % MOD;
+//        long long lsum2 = (sum2 + sum[rs[t2]] * (1 - p + MOD)) % MOD;
+//        long long rsum1 = (sum1 + sum[ls[t1]] * p) % MOD;
+//        long long rsum2 = (sum2 + sum[ls[t2]] * p) % MOD;
+//        ls[t1] = merge(l, mid, ls[t1], ls[t2], p, lsum1, lsum2);
+//        rs[t1] = merge(mid + 1, r, rs[t1], rs[t2], p, rsum1, rsum2);
 //        up(t1);
 //    }
 //    return t1;
 //}
 //
-//void dfs(int u) {
+//void dp(int u) {
 //    if (sonCnt[u] == 0) {
-//        root[u] = insert(val[u], 1, cntv, root[u]);
+//        root[u] = insert(arr[u], 1, cntv, root[u]);
 //    } else if (sonCnt[u] == 1) {
-//        dfs(son[u][0]);
+//        dp(son[u][0]);
 //        root[u] = root[son[u][0]];
 //    } else {
-//        dfs(son[u][0]);
-//        dfs(son[u][1]);
-//        root[u] = merge(1, cntv, root[son[u][0]], root[son[u][1]], val[u], 0, 0);
+//        dp(son[u][0]);
+//        dp(son[u][1]);
+//        root[u] = merge(1, cntv, root[son[u][0]], root[son[u][1]], arr[u], 0, 0);
 //    }
 //}
 //
@@ -143,7 +150,7 @@ package class182;
 //        return;
 //    }
 //    if (l == r) {
-//        d[l] = sum[i] % MOD;
+//        D[l] = sum[i] % MOD;
 //    } else {
 //        down(i);
 //        int mid = (l + r) >> 1;
@@ -161,9 +168,9 @@ package class182;
 //    long long inv = power(10000, MOD - 2);
 //    for (int i = 1; i <= n; i++) {
 //        if (sonCnt[i] == 0) {
-//            sorted[++cntv] = val[i];
+//            sorted[++cntv] = arr[i];
 //        } else {
-//            val[i] = (int)(inv * val[i] % MOD);
+//            arr[i] = (int)(inv * arr[i] % MOD);
 //        }
 //    }
 //    sort(sorted + 1, sorted + cntv + 1);
@@ -176,7 +183,7 @@ package class182;
 //    cntv = len;
 //    for (int i = 1; i <= n; i++) {
 //        if (sonCnt[i] == 0) {
-//            val[i] = kth(val[i]);
+//            arr[i] = kth(arr[i]);
 //        }
 //    }
 //}
@@ -189,14 +196,14 @@ package class182;
 //        cin >> fa[i];
 //    }
 //    for (int i = 1; i <= n; i++) {
-//        cin >> val[i];
+//        cin >> arr[i];
 //    }
 //    prepare();
-//    dfs(1);
+//    dp(1);
 //    getd(1, cntv, root[1]);
 //    long long ans = 0;
 //    for (int i = 1; i <= cntv; i++) {
-//        ans = (ans + (1LL * i * sorted[i]) % MOD * d[i] % MOD * d[i] % MOD) % MOD;
+//        ans = (ans + (1LL * i * sorted[i]) % MOD * D[i] % MOD * D[i] % MOD) % MOD;
 //    }
 //    cout << ans << '\n';
 //    return 0;
