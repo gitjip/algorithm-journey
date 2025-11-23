@@ -16,20 +16,18 @@ package class182;
 //using namespace std;
 //
 //const int MAXN = 200001;
+//const int MAXT = MAXN * 10;
 //const int MAXV = 100;
-//const int MAXT = MAXN * 40;
 //int n, q;
 //int arr[MAXN];
 //
 //int root[MAXV + 1];
 //int ls[MAXT];
 //int rs[MAXT];
-//int sum[MAXT];
+//bool status[MAXT];
 //
 //int pool[MAXT];
 //int top;
-//
-//int ans[MAXN];
 //
 //void prepare() {
 //    top = 0;
@@ -46,11 +44,11 @@ package class182;
 //    pool[++top] = i;
 //    ls[i] = 0;
 //    rs[i] = 0;
-//    sum[i] = 0;
+//    status[i] = false;
 //}
 //
 //void up(int i) {
-//    sum[i] = sum[ls[i]] + sum[rs[i]];
+//    status[i] = status[ls[i]] | status[rs[i]];
 //}
 //
 //int insert(int jobi, int l, int r, int i) {
@@ -59,7 +57,7 @@ package class182;
 //        rt = newNode();
 //    }
 //    if (l == r) {
-//        sum[rt]++;
+//        status[rt] = true;
 //    } else {
 //        int mid = (l + r) >> 1;
 //        if (jobi <= mid) {
@@ -77,7 +75,7 @@ package class182;
 //        return t1 + t2;
 //    }
 //    if (l == r) {
-//        sum[t1] += sum[t2];
+//        status[t1] |= status[t2];
 //    } else {
 //        int mid = (l + r) >> 1;
 //        ls[t1] = merge(l, mid, ls[t1], ls[t2]);
@@ -120,11 +118,11 @@ package class182;
 //}
 //
 //void dfs(int val, int l, int r, int i) {
-//    if (i == 0 || sum[i] == 0) {
+//    if (i == 0 || !status[i]) {
 //        return;
 //    }
 //    if (l == r) {
-//        ans[l] = val;
+//        arr[l] = val;
 //    } else {
 //        int mid = (l + r) >> 1;
 //        dfs(val, l, mid, ls[i]);
@@ -140,10 +138,10 @@ package class182;
 //    for (int i = 1; i <= n; i++) {
 //        cin >> arr[i];
 //    }
-//    cin >> q;
 //    for (int i = 1; i <= n; i++) {
 //        root[arr[i]] = insert(i, 1, n, root[arr[i]]);
 //    }
+//    cin >> q;
 //    for (int i = 1, l, r, x, y; i <= q; i++) {
 //        cin >> l >> r >> x >> y;
 //        split(l, r, 1, n, root[x]);
@@ -154,7 +152,7 @@ package class182;
 //        dfs(v, 1, n, root[v]);
 //    }
 //    for (int i = 1; i <= n; i++) {
-//        cout << ans[i] << ' ';
+//        cout << arr[i] << ' ';
 //    }
 //    return 0;
 //}

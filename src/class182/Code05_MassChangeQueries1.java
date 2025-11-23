@@ -18,20 +18,18 @@ import java.io.PrintWriter;
 public class Code05_MassChangeQueries1 {
 
 	public static int MAXN = 200001;
+	public static int MAXT = MAXN * 10;
 	public static int MAXV = 100;
-	public static int MAXT = MAXN * 40;
 	public static int n, q;
 	public static int[] arr = new int[MAXN];
 
 	public static int[] root = new int[MAXV + 1];
 	public static int[] ls = new int[MAXT];
 	public static int[] rs = new int[MAXT];
-	public static int[] sum = new int[MAXT];
+	public static boolean[] status = new boolean[MAXT];
 
 	public static int[] pool = new int[MAXT];
 	public static int top;
-
-	public static int[] ans = new int[MAXN];
 
 	public static void prepare() {
 		top = 0;
@@ -48,11 +46,11 @@ public class Code05_MassChangeQueries1 {
 		pool[++top] = i;
 		ls[i] = 0;
 		rs[i] = 0;
-		sum[i] = 0;
+		status[i] = false;
 	}
 
 	public static void up(int i) {
-		sum[i] = sum[ls[i]] + sum[rs[i]];
+		status[i] = status[ls[i]] | status[rs[i]];
 	}
 
 	public static int insert(int jobi, int l, int r, int i) {
@@ -61,7 +59,7 @@ public class Code05_MassChangeQueries1 {
 			rt = newNode();
 		}
 		if (l == r) {
-			sum[rt]++;
+			status[rt] = true;
 		} else {
 			int mid = (l + r) >> 1;
 			if (jobi <= mid) {
@@ -79,7 +77,7 @@ public class Code05_MassChangeQueries1 {
 			return t1 + t2;
 		}
 		if (l == r) {
-			sum[t1] += sum[t2];
+			status[t1] |= status[t2];
 		} else {
 			int mid = (l + r) >> 1;
 			ls[t1] = merge(l, mid, ls[t1], ls[t2]);
@@ -122,11 +120,11 @@ public class Code05_MassChangeQueries1 {
 	}
 
 	public static void dfs(int val, int l, int r, int i) {
-		if (i == 0 || sum[i] == 0) {
+		if (i == 0 || !status[i]) {
 			return;
 		}
 		if (l == r) {
-			ans[l] = val;
+			arr[l] = val;
 		} else {
 			int mid = (l + r) >> 1;
 			dfs(val, l, mid, ls[i]);
@@ -142,10 +140,10 @@ public class Code05_MassChangeQueries1 {
 		for (int i = 1; i <= n; i++) {
 			arr[i] = in.nextInt();
 		}
-		q = in.nextInt();
 		for (int i = 1; i <= n; i++) {
 			root[arr[i]] = insert(i, 1, n, root[arr[i]]);
 		}
+		q = in.nextInt();
 		for (int i = 1, l, r, x, y; i <= q; i++) {
 			l = in.nextInt();
 			r = in.nextInt();
@@ -159,7 +157,7 @@ public class Code05_MassChangeQueries1 {
 			dfs(v, 1, n, root[v]);
 		}
 		for (int i = 1; i <= n; i++) {
-			out.print(ans[i] + " ");
+			out.print(arr[i] + " ");
 		}
 		out.flush();
 		out.close();
