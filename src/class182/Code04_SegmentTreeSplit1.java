@@ -1,11 +1,16 @@
 package class182;
 
 // 线段树分裂，java版
+// 数字范围1~n，给定每种数字的个数，建立编号为1的可重集合，以后新集合的编号自增即可
+// 接下来有m条操作，每条操作是如下五种类型中的一种
+// 操作 0 x y z : x号集合中，取出[y, z]范围上的所有数字，生成新的集合
+// 操作 1 x y   : x号集合与y号集合合并，以后y编号的集合不会使用了
+// 操作 2 x y z : x号集合中，加入y个数字z
+// 操作 3 x y z : x号集合中，查询[y, z]范围上的数字个数
+// 操作 4 x y   : x号集合中，查询第y小的数字，不存在打印-1
+// 1 <= 所有数据 <= 2 * 10^5
 // 测试链接 : https://www.luogu.com.cn/problem/P5494
-// 提交以下的code，提交时请把类名改成"Main"
-// java实现的逻辑一定是正确的，但是本题卡常，无法通过所有测试用例
-// 想通过用C++实现，本节课Code04_SegmentTreeSplit2文件就是C++的实现
-// 两个版本的逻辑完全一样，C++版本可以通过所有测试
+// 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,14 +20,14 @@ import java.io.PrintWriter;
 public class Code04_SegmentTreeSplit1 {
 
 	public static int MAXN = 200001;
-	public static int MAXT = MAXN * 40;
+	public static int MAXT = MAXN * 10;
 	public static int n, m;
 
 	public static int[] root = new int[MAXN];
 	public static int[] ls = new int[MAXT];
 	public static int[] rs = new int[MAXT];
 	public static long[] sum = new long[MAXT];
-	public static int cntRoot;
+	public static int version;
 
 	public static int[] pool = new int[MAXT];
 	public static int top;
@@ -154,10 +159,10 @@ public class Code04_SegmentTreeSplit1 {
 		prepare();
 		n = in.nextInt();
 		m = in.nextInt();
-		cntRoot = 1;
+		version = 1;
 		for (int i = 1, x; i <= n; i++) {
 			x = in.nextInt();
-			root[cntRoot] = add(i, x, 1, n, root[1]);
+			root[version] = add(i, x, 1, n, root[1]);
 		}
 		for (int i = 1, op, x, y, z; i <= m; i++) {
 			op = in.nextInt();
@@ -167,7 +172,7 @@ public class Code04_SegmentTreeSplit1 {
 				z = in.nextInt();
 				split(y, z, 1, n, root[x]);
 				root[x] = tree1;
-				root[++cntRoot] = tree2;
+				root[++version] = tree2;
 			} else if (op == 1) {
 				x = in.nextInt();
 				y = in.nextInt();

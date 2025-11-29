@@ -1,6 +1,11 @@
 package class182;
 
 // 值全改的操作，java版
+// 给定一个长度为n的数组arr，接下来有q条操作，格式如下
+// 操作 l r x y : arr[l..r]范围上，所有数字x改成数字y
+// 所有操作做完之后，从左到右打印arr中的值
+// 1 <= n、q <= 2 * 10^5
+// 1 <= arr[i]、x、y <= 100
 // 测试链接 : https://www.luogu.com.cn/problem/CF911G
 // 测试链接 : https://codeforces.com/problemset/problem/911/G
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
@@ -13,20 +18,18 @@ import java.io.PrintWriter;
 public class Code05_MassChangeQueries1 {
 
 	public static int MAXN = 200001;
+	public static int MAXT = MAXN * 10;
 	public static int MAXV = 100;
-	public static int MAXT = MAXN * 40;
 	public static int n, q;
 	public static int[] arr = new int[MAXN];
 
 	public static int[] root = new int[MAXV + 1];
 	public static int[] ls = new int[MAXT];
 	public static int[] rs = new int[MAXT];
-	public static int[] sum = new int[MAXT];
+	public static boolean[] status = new boolean[MAXT];
 
 	public static int[] pool = new int[MAXT];
 	public static int top;
-
-	public static int[] ans = new int[MAXN];
 
 	public static void prepare() {
 		top = 0;
@@ -43,11 +46,11 @@ public class Code05_MassChangeQueries1 {
 		pool[++top] = i;
 		ls[i] = 0;
 		rs[i] = 0;
-		sum[i] = 0;
+		status[i] = false;
 	}
 
-	public static void up(int p) {
-		sum[p] = sum[ls[p]] + sum[rs[p]];
+	public static void up(int i) {
+		status[i] = status[ls[i]] | status[rs[i]];
 	}
 
 	public static int insert(int jobi, int l, int r, int i) {
@@ -56,7 +59,7 @@ public class Code05_MassChangeQueries1 {
 			rt = newNode();
 		}
 		if (l == r) {
-			sum[rt]++;
+			status[rt] = true;
 		} else {
 			int mid = (l + r) >> 1;
 			if (jobi <= mid) {
@@ -74,7 +77,7 @@ public class Code05_MassChangeQueries1 {
 			return t1 + t2;
 		}
 		if (l == r) {
-			sum[t1] += sum[t2];
+			status[t1] |= status[t2];
 		} else {
 			int mid = (l + r) >> 1;
 			ls[t1] = merge(l, mid, ls[t1], ls[t2]);
@@ -117,11 +120,11 @@ public class Code05_MassChangeQueries1 {
 	}
 
 	public static void dfs(int val, int l, int r, int i) {
-		if (i == 0 || sum[i] == 0) {
+		if (i == 0 || !status[i]) {
 			return;
 		}
 		if (l == r) {
-			ans[l] = val;
+			arr[l] = val;
 		} else {
 			int mid = (l + r) >> 1;
 			dfs(val, l, mid, ls[i]);
@@ -137,28 +140,25 @@ public class Code05_MassChangeQueries1 {
 		for (int i = 1; i <= n; i++) {
 			arr[i] = in.nextInt();
 		}
-		q = in.nextInt();
 		for (int i = 1; i <= n; i++) {
 			root[arr[i]] = insert(i, 1, n, root[arr[i]]);
 		}
+		q = in.nextInt();
 		for (int i = 1, l, r, x, y; i <= q; i++) {
 			l = in.nextInt();
 			r = in.nextInt();
 			x = in.nextInt();
 			y = in.nextInt();
-			if (x != y) {
-				split(l, r, 1, n, root[x]);
-				root[x] = tree1;
-				root[y] = merge(1, n, root[y], tree2);
-			}
+			split(l, r, 1, n, root[x]);
+			root[x] = tree1;
+			root[y] = merge(1, n, root[y], tree2);
 		}
 		for (int v = 1; v <= MAXV; v++) {
 			dfs(v, 1, n, root[v]);
 		}
 		for (int i = 1; i <= n; i++) {
-			out.print(ans[i] + " ");
+			out.print(arr[i] + " ");
 		}
-		out.println();
 		out.flush();
 		out.close();
 	}

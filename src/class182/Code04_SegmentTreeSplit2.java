@@ -1,6 +1,14 @@
 package class182;
 
 // 线段树分裂，C++版
+// 数字范围1~n，给定每种数字的个数，建立编号为1的可重集合，以后新集合的编号自增即可
+// 接下来有m条操作，每条操作是如下五种类型中的一种
+// 操作 0 x y z : x号集合中，取出[y, z]范围上的所有数字，生成新的集合
+// 操作 1 x y   : x号集合与y号集合合并，以后y编号的集合不会使用了
+// 操作 2 x y z : x号集合中，加入y个数字z
+// 操作 3 x y z : x号集合中，查询[y, z]范围上的数字个数
+// 操作 4 x y   : x号集合中，查询第y小的数字，不存在打印-1
+// 1 <= 所有数据 <= 2 * 10^5
 // 测试链接 : https://www.luogu.com.cn/problem/P5494
 // 如下实现是C++的版本，C++版本和java版本逻辑完全一样
 // 提交如下代码，可以通过所有测试用例
@@ -10,14 +18,14 @@ package class182;
 //using namespace std;
 //
 //const int MAXN = 200001;
-//const int MAXT = MAXN * 40;
+//const int MAXT = MAXN * 10;
 //int n, m;
 //
 //int root[MAXN];
 //int ls[MAXT];
 //int rs[MAXT];
 //long long sum[MAXT];
-//int cntRoot;
+//int version;
 //
 //int pool[MAXT];
 //int top;
@@ -148,10 +156,10 @@ package class182;
 //    cin.tie(nullptr);
 //    prepare();
 //    cin >> n >> m;
-//    cntRoot = 1;
+//    version = 1;
 //    for (int i = 1, x; i <= n; i++) {
 //        cin >> x;
-//        root[cntRoot] = add(i, x, 1, n, root[1]);
+//        root[version] = add(i, x, 1, n, root[1]);
 //    }
 //    for (int i = 1, op, x, y, z; i <= m; i++) {
 //        cin >> op;
@@ -159,7 +167,7 @@ package class182;
 //            cin >> x >> y >> z;
 //            split(y, z, 1, n, root[x]);
 //            root[x] = tree1;
-//            root[++cntRoot] = tree2;
+//            root[++version] = tree2;
 //        } else if (op == 1) {
 //            cin >> x >> y;
 //            root[x] = merge(1, n, root[x], root[y]);
