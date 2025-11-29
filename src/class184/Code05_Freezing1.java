@@ -1,6 +1,11 @@
 package class184;
 
 // 最大中位数路径，java版
+// 一共有n个节点，给定n-1条边，每条边给定边权，所有节点组成一棵树
+// 一条简单路径上，收集所有边权组成序列，其中的 下中位数 作为路径的权
+// 边数在[limitl, limitr]范围的所有路径中，找到最大权的路径
+// 如果有多条路径，找到其中一个方案即可，打印两个端点
+// 1 <= n <= 10^5    0 <= 边权 <= 10^9
 // 测试链接 : https://www.luogu.com.cn/problem/CF150E
 // 测试链接 : https://codeforces.com/problemset/problem/150/E
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
@@ -11,14 +16,14 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
-public class Code03_Freezing1 {
+public class Code05_Freezing1 {
 
 	public static int MAXN = 100001;
 	public static int INF = 1000000001;
-	public static int n, limitl, limitr;
+	public static int n, limitl, limitr, cntw;
 
+	// 端点u、端点v、边权w
 	public static int[][] arr = new int[MAXN][3];
-	public static int cntw;
 
 	public static int[] head = new int[MAXN];
 	public static int[] nxt = new int[MAXN << 1];
@@ -29,16 +34,17 @@ public class Code03_Freezing1 {
 	public static boolean[] vis = new boolean[MAXN];
 	public static int[] siz = new int[MAXN];
 
+	// 边的编号eid、边连接的子树大小size
 	public static int[][] edgeArr = new int[MAXN][2];
 	public static int cnte;
 
 	public static int[] preVal = new int[MAXN];
 	public static int[] preNode = new int[MAXN];
-	public static int prelen;
+	public static int preLen;
 
 	public static int[] curVal = new int[MAXN];
 	public static int[] curNode = new int[MAXN];
-	public static int curlen;
+	public static int curLen;
 
 	public static int[] que = new int[MAXN];
 
@@ -82,10 +88,7 @@ public class Code03_Freezing1 {
 	}
 
 	public static void dfs(int u, int fa, int edge, int sum, int limit) {
-		if (edge > limitr) {
-			return;
-		}
-		curlen = Math.max(curlen, edge);
+		curLen = Math.max(curLen, edge);
 		if (sum > curVal[edge]) {
 			curVal[edge] = sum;
 			curNode[edge] = u;
@@ -102,27 +105,27 @@ public class Code03_Freezing1 {
 	public static boolean check(int u, int limit) {
 		preVal[0] = 0;
 		preNode[0] = u;
-		prelen = 0;
-		for (int ei = 1; ei <= cnte; ei++) {
-			int v = to[edgeArr[ei][0]];
-			int w = weight[edgeArr[ei][0]];
+		preLen = 0;
+		for (int k = 1; k <= cnte; k++) {
+			int v = to[edgeArr[k][0]];
+			int w = weight[edgeArr[k][0]];
 			for (int i = 1; i <= siz[v]; i++) {
 				curVal[i] = -INF;
 			}
-			curlen = 0;
+			curLen = 0;
 			dfs(v, u, 1, w >= limit ? 1 : -1, limit);
 			int ql = 1, qr = 0;
 			// 根据之前的信息，初步建立窗口，子树按秩处理非常重要
-			for (int i = prelen; i >= limitl; i--) {
+			for (int i = Math.min(preLen, limitr); i >= limitl; i--) {
 				while (ql <= qr && preVal[que[qr]] <= preVal[i]) {
 					qr--;
 				}
 				que[++qr] = i;
 			}
 			int down = limitr, up = limitl;
-			for (int i = 1; i <= curlen; i++) {
+			for (int i = 1; i <= curLen; i++) {
 				up--;
-				if (up >= 0 && up <= prelen) {
+				if (up >= 0 && up <= preLen) {
 					while (ql <= qr && preVal[que[qr]] <= preVal[up]) {
 						qr--;
 					}
@@ -141,13 +144,13 @@ public class Code03_Freezing1 {
 					return true;
 				}
 			}
-			for (int i = 1; i <= curlen; i++) {
-				if (i > prelen || curVal[i] > preVal[i]) {
+			for (int i = 1; i <= curLen; i++) {
+				if (i > preLen || curVal[i] > preVal[i]) {
 					preVal[i] = curVal[i];
 					preNode[i] = curNode[i];
 				}
 			}
-			prelen = Math.max(prelen, curlen);
+			preLen = Math.max(preLen, curLen);
 		}
 		return false;
 	}

@@ -21,23 +21,32 @@ public class Code01_Capital1 {
 	public static int n, k;
 	public static int[] color = new int[MAXN];
 
+	// 建树的链式前向星
 	public static int[] headg = new int[MAXN];
 	public static int[] nextg = new int[MAXN << 1];
 	public static int[] tog = new int[MAXN << 1];
 	public static int cntg;
 
+	// 颜色拥有的节点列表
 	public static int[] headc = new int[MAXN];
 	public static int[] nextc = new int[MAXN];
 	public static int[] toc = new int[MAXN];
 	public static int cntc;
 
+	// 点分治
 	public static boolean[] vis = new boolean[MAXN];
 	public static int[] siz = new int[MAXN];
 
+	// father[x] = y，表示x此时的父亲节点是y
 	public static int[] father = new int[MAXN];
-	public static int[] curRoot = new int[MAXN];
+	// nodeRoot[x] = y，表示x此时的重心是y
+	public static int[] nodeRoot = new int[MAXN];
+
+	// 宽度优先遍历的队列
 	public static int[] que = new int[MAXN];
+	// 节点是否进过队列
 	public static boolean[] nodeVis = new boolean[MAXN];
+	// 颜色是否讨论过
 	public static boolean[] colorVis = new boolean[MAXN];
 
 	// 讲解118，递归函数改成迭代所需要的栈
@@ -137,7 +146,7 @@ public class Code01_Capital1 {
 	// 收集信息递归版，java会爆栈，C++可以通过
 	public static void dfs1(int u, int fa, int rt) {
 		father[u] = fa;
-		curRoot[u] = rt;
+		nodeRoot[u] = rt;
 		nodeVis[u] = false;
 		colorVis[color[u]] = false;
 		for (int e = headg[u]; e > 0; e = nextg[e]) {
@@ -156,7 +165,7 @@ public class Code01_Capital1 {
 			pop();
 			if (e == -1) {
 				father[u] = f;
-				curRoot[u] = rt;
+				nodeRoot[u] = rt;
 				nodeVis[u] = false;
 				colorVis[color[u]] = false;
 				e = headg[u];
@@ -167,7 +176,7 @@ public class Code01_Capital1 {
 				push(u, f, rt, e);
 				int v = tog[e];
 				if (v != f && !vis[v]) {
-					push(tog[e], u, rt, -1);
+					push(v, u, rt, -1);
 				}
 			}
 		}
@@ -191,7 +200,7 @@ public class Code01_Capital1 {
 				ans++;
 				for (int e = headc[color[cur]]; e > 0; e = nextc[e]) {
 					int v = toc[e];
-					if (curRoot[v] != u) {
+					if (nodeRoot[v] != u) {
 						return INF;
 					}
 					if (!nodeVis[v]) {

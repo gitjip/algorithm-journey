@@ -1,6 +1,12 @@
 package class184;
 
 // 快递员，java版
+// 一共有n个节点，给定n-1条边，每条边给定边权，所有节点组成一棵树
+// 对于点对(a, b)，假设你选择的中心点为x，那么点对的距离如下
+// 点对(a, b)的距离 = a到x的路径权值和 + b到x的路径权值和
+// 一共有m个点对，你需要选择中心点x，使得点对距离的最大值尽量小
+// 打印这个最小的点对距离最大值
+// 1 <= n、m <= 10^5
 // 测试链接 : https://www.luogu.com.cn/problem/P4886
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
@@ -9,7 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-public class Code04_Courier1 {
+public class Code03_Courier1 {
 
 	public static int MAXN = 100001;
 	public static int n, m;
@@ -125,7 +131,6 @@ public class Code04_Courier1 {
 		dist[u] = d;
 		for (int e = head[u]; e > 0; e = nxt[e]) {
 			int v = to[e];
-			// 注意没有vis[v]的判断
 			if (v != fa) {
 				dfs1(v, u, d + weight[e], t);
 			}
@@ -148,7 +153,6 @@ public class Code04_Courier1 {
 			if (e != 0) {
 				push(u, f, d, t, e);
 				int v = to[e];
-				// 注意没有vis[v]的判断
 				if (v != f) {
 					push(v, u, d + weight[e], t, -1);
 				}
@@ -156,33 +160,36 @@ public class Code04_Courier1 {
 		}
 	}
 
-	public static int solve(int u) {
-		vis[u] = true;
-		tree[u] = u;
-		dist[u] = 0;
-		for (int e = head[u]; e > 0; e = nxt[e]) {
-			int v = to[e];
-			int w = weight[e];
-			// dfs1(v, u, w, v);
-			dfs2(v, u, w, v);
-		}
-		int ans = 0, son = 0, cur, t1, t2;
-		for (int i = 1; i <= m; i++) {
-			cur = dist[a[i]] + dist[b[i]];
-			t1 = tree[a[i]];
-			t2 = tree[b[i]];
-			if (ans < cur) {
-				ans = cur;
-				son = t1 == t2 ? t1 : -1;
-			} else if (ans == cur && (t1 != t2 || t1 != son)) {
-				son = -1;
+	public static int compute() {
+		int ans = 1000000001;
+		int u = getCentroid(1, 0);
+		while (!vis[u]) {
+			vis[u] = true;
+			tree[u] = u;
+			dist[u] = 0;
+			for (int e = head[u]; e > 0; e = nxt[e]) {
+				int v = to[e];
+				int w = weight[e];
+				// dfs1(v, u, w, v);
+				dfs2(v, u, w, v);
 			}
-		}
-		if (son != -1) {
-			son = getCentroid(son, u);
-			if (!vis[son]) {
-				ans = Math.min(ans, solve(son));
+			int maxDist = 0, son = 0;
+			for (int i = 1; i <= m; i++) {
+				int curDist = dist[a[i]] + dist[b[i]];
+				int t1 = tree[a[i]];
+				int t2 = tree[b[i]];
+				if (maxDist < curDist) {
+					maxDist = curDist;
+					son = t1 == t2 ? t1 : 0;
+				} else if (maxDist == curDist && (t1 != t2 || t1 != son)) {
+					son = 0;
+				}
 			}
+			ans = Math.min(ans, maxDist);
+			if (son == 0) {
+				break;
+			}
+			u = getCentroid(son, u);
 		}
 		return ans;
 	}
@@ -203,7 +210,7 @@ public class Code04_Courier1 {
 			a[i] = in.nextInt();
 			b[i] = in.nextInt();
 		}
-		out.println(solve(getCentroid(1, 0)));
+		out.println(compute());
 		out.flush();
 		out.close();
 	}

@@ -33,7 +33,8 @@ package class184;
 //int siz[MAXN];
 //
 //int father[MAXN];
-//int curRoot[MAXN];
+//int nodeRoot[MAXN];
+//
 //int que[MAXN];
 //bool nodeVis[MAXN];
 //bool colorVis[MAXN];
@@ -82,7 +83,7 @@ package class184;
 //
 //void dfs(int u, int fa, int rt) {
 //    father[u] = fa;
-//    curRoot[u] = rt;
+//    nodeRoot[u] = rt;
 //    nodeVis[u] = false;
 //    colorVis[color[u]] = false;
 //    for (int e = headg[u]; e; e = nextg[e]) {
@@ -110,7 +111,7 @@ package class184;
 //            ans++;
 //            for (int e = headc[color[cur]]; e; e = nextc[e]) {
 //                int v = toc[e];
-//                if (curRoot[v] != u) {
+//                if (nodeRoot[v] != u) {
 //                    return INF;
 //                }
 //                if (!nodeVis[v]) {
