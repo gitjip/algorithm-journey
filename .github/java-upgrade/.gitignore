@@ -1,0 +1,85 @@
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+
+# Build folders
+target/
+build/
+out/
+
+# Gradle
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Maven
+.mvn/
+.m2/
+
+# IDEs/editors
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.vscode/
+.vs/
+
+# Eclipse/NetBeans
+.metadata/
+bin/
+tmp/
+nbproject/private/
+
+# C/C++ object files and binaries
+*.o
+*.obj
+*.lo
+*.la
+*.lai
+*.al
+*.class (for mixed projects)
+*.so
+*.a
+*.lib
+*.dll
+*.dylib
+*.exe
+*.out
+*.app
+*.ipa
+
+# C/C++ build systems and generated files
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+**/CMakeLists.txt.user
+*.dir/
+
+# Debugging and profiling
+*.pdb
+*.idb
+*.dSYM/
+*.prof
+*.gcda
+*.gcno
+
+# Misc temporary files
+*.log
+*.tmp
+*.swp
+*~
+.DS_Store
+Thumbs.db
+core
+core.*
