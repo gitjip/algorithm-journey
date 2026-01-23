@@ -2,7 +2,7 @@ package class184;
 
 // 支配点对距离，C++版
 // 一共有n个节点，给定n-1条边，每条边给定边权，所有节点组成一棵树
-// 节点i到节点j的简单路径边权和，定义为dist(i, j)
+// 节点i到节点j的简单路径，边权的累加和，定义为dist(i, j)
 // 编号区间[x, y]，考虑所有点对(a, b)，要求 x <= a < b <= y
 // 如果dist(a, b)是所有情况中最小的，则称(a, b)为区间[x, y]的支配点对
 // 也可以说，区间[x, y]的支配点对距离为dist(a, b)
@@ -21,7 +21,7 @@ package class184;
 //    int x, y, id;
 //};
 //
-//struct Key {
+//struct Pair {
 //    int a, b;
 //    long long dist;
 //};
@@ -30,19 +30,19 @@ package class184;
 //    return q1.y < q2.y;
 //}
 //
-//bool KeyCmp(Key k1, Key k2) {
-//    return k1.b < k2.b;
+//bool PairCmp(Pair p1, Pair p2) {
+//    return p1.b < p2.b;
 //}
 //
 //const int MAXN = 200001;
 //const int MAXM = 1000001;
-//const int MAXK = 10000001;
+//const int MAXP = 10000001;
 //const long long INF = 1LL << 60;
 //int n, m;
 //Query queryArr[MAXM];
 //
-//Key keyArr[MAXK];
-//int cntk;
+//Pair pairArr[MAXP];
+//int cntp;
 //
 //int head[MAXN];
 //int nxt[MAXN << 1];
@@ -60,7 +60,7 @@ package class184;
 //int sta[MAXN];
 //int top;
 //
-//long long minv[MAXN << 2];
+//long long minTree[MAXN << 2];
 //long long ans[MAXM];
 //
 //void addEdge(int u, int v, int w) {
@@ -114,7 +114,7 @@ package class184;
 //
 //void stackAdd(int cur) {
 //    while (top > 0 && dist[sta[top]] >= dist[cur]) {
-//        keyArr[++cntk] = { min(sta[top], cur), max(sta[top], cur), dist[sta[top]] + dist[cur] };
+//        pairArr[++cntp] = { min(sta[top], cur), max(sta[top], cur), dist[sta[top]] + dist[cur] };
 //        top--;
 //    }
 //    sta[++top] = cur;
@@ -146,12 +146,12 @@ package class184;
 //}
 //
 //void up(int i) {
-//    minv[i] = min(minv[i << 1], minv[i << 1 | 1]);
+//    minTree[i] = min(minTree[i << 1], minTree[i << 1 | 1]);
 //}
 //
 //void build(int l, int r, int i) {
 //    if (l == r) {
-//        minv[i] = INF;
+//        minTree[i] = INF;
 //    } else {
 //        int mid = (l + r) >> 1;
 //        build(l, mid, i << 1);
@@ -162,7 +162,7 @@ package class184;
 //
 //void update(int jobi, long long jobv, int l, int r, int i) {
 //    if (l == r) {
-//        minv[i] = min(minv[i], jobv);
+//        minTree[i] = min(minTree[i], jobv);
 //    } else {
 //        int mid = (l + r) >> 1;
 //        if (jobi <= mid) {
@@ -176,7 +176,7 @@ package class184;
 //
 //long long query(int jobl, int jobr, int l, int r, int i) {
 //    if (jobl <= l && r <= jobr) {
-//        return minv[i];
+//        return minTree[i];
 //    }
 //    long long ans = INF;
 //    int mid = (l + r) >> 1;
@@ -192,11 +192,11 @@ package class184;
 //void compute() {
 //    solve(getCentroid(1, 0));
 //    sort(queryArr + 1, queryArr + m + 1, QueryCmp);
-//    sort(keyArr + 1, keyArr + cntk + 1, KeyCmp);
+//    sort(pairArr + 1, pairArr + cntp + 1, PairCmp);
 //    build(1, n, 1);
 //    for (int i = 1, j = 1; i <= m; i++) {
-//        for (; j <= cntk && keyArr[j].b <= queryArr[i].y; j++) {
-//            update(keyArr[j].a, keyArr[j].dist, 1, n, 1);
+//        for (; j <= cntp && pairArr[j].b <= queryArr[i].y; j++) {
+//            update(pairArr[j].a, pairArr[j].dist, 1, n, 1);
 //        }
 //        if (queryArr[i].x == queryArr[i].y) {
 //            ans[queryArr[i].id] = -1;

@@ -2,7 +2,7 @@ package class184;
 
 // 支配点对距离，java版
 // 一共有n个节点，给定n-1条边，每条边给定边权，所有节点组成一棵树
-// 节点i到节点j的简单路径边权和，定义为dist(i, j)
+// 节点i到节点j的简单路径，边权的累加和，定义为dist(i, j)
 // 编号区间[x, y]，考虑所有点对(a, b)，要求 x <= a < b <= y
 // 如果dist(a, b)是所有情况中最小的，则称(a, b)为区间[x, y]的支配点对
 // 也可以说，区间[x, y]的支配点对距离为dist(a, b)
@@ -22,17 +22,20 @@ public class Code06_TreeDistance1 {
 
 	public static int MAXN = 200001;
 	public static int MAXM = 1000001;
-	public static int MAXK = 10000001;
+	public static int MAXP = 10000001;
 	public static long INF = 1L << 60;
 	public static int n, m;
+
+	// 所有查询
 	public static int[] qx = new int[MAXM];
 	public static int[] qy = new int[MAXM];
 	public static int[] qid = new int[MAXM];
 
-	public static int[] keya = new int[MAXK];
-	public static int[] keyb = new int[MAXK];
-	public static long[] keyDist = new long[MAXK];
-	public static int cntk;
+	// 保留的点对
+	public static int[] pa = new int[MAXP];
+	public static int[] pb = new int[MAXP];
+	public static long[] pdist = new long[MAXP];
+	public static int cntp;
 
 	public static int[] head = new int[MAXN];
 	public static int[] nxt = new int[MAXN << 1];
@@ -47,10 +50,14 @@ public class Code06_TreeDistance1 {
 	public static int[] nodeArr = new int[MAXN];
 	public static int cnta;
 
+	// 单调栈
 	public static int[] sta = new int[MAXN];
 	public static int top;
 
-	public static long[] minv = new long[MAXN << 2];
+	// 维护最小值的线段树
+	public static long[] minTree = new long[MAXN << 2];
+
+	// 查询的答案
 	public static long[] ans = new long[MAXM];
 
 	// 讲解118，递归函数改成迭代所需要的栈
@@ -94,23 +101,23 @@ public class Code06_TreeDistance1 {
 		sortQuery(i, r);
 	}
 
-	// 所有关键点对根据b从小到大排序，java自带的排序慢，手撸双指针快排
-	public static void sortKey(int l, int r) {
+	// 所有点对根据b从小到大排序，java自带的排序慢，手撸双指针快排
+	public static void sortPair(int l, int r) {
 		if (l >= r) return;
-		int i = l, j = r, pivot = keyb[(l + r) >> 1], t1;
+		int i = l, j = r, pivot = pb[(l + r) >> 1], t1;
 		long t2;
 		while (i <= j) {
-			while (keyb[i] < pivot) i++;
-			while (keyb[j] > pivot) j--;
+			while (pb[i] < pivot) i++;
+			while (pb[j] > pivot) j--;
 			if (i <= j) {
-				t1 = keya[i]; keya[i] = keya[j]; keya[j] = t1;
-				t1 = keyb[i]; keyb[i] = keyb[j]; keyb[j] = t1;
-				t2 = keyDist[i]; keyDist[i] = keyDist[j]; keyDist[j] = t2;
+				t1 = pa[i]; pa[i] = pa[j]; pa[j] = t1;
+				t1 = pb[i]; pb[i] = pb[j]; pb[j] = t1;
+				t2 = pdist[i]; pdist[i] = pdist[j]; pdist[j] = t2;
 				i++; j--;
 			}
 		}
-		sortKey(l, j);
-		sortKey(i, r);
+		sortPair(l, j);
+		sortPair(i, r);
 	}
 
 	public static void addEdge(int u, int v, int w) {
@@ -220,9 +227,9 @@ public class Code06_TreeDistance1 {
 
 	public static void stackAdd(int cur) {
 		while (top > 0 && dist[sta[top]] >= dist[cur]) {
-			keya[++cntk] = Math.min(sta[top], cur);
-			keyb[cntk] = Math.max(sta[top], cur);
-			keyDist[cntk] = dist[sta[top]] + dist[cur];
+			pa[++cntp] = Math.min(sta[top], cur);
+			pb[cntp] = Math.max(sta[top], cur);
+			pdist[cntp] = dist[sta[top]] + dist[cur];
 			top--;
 		}
 		sta[++top] = cur;
@@ -234,10 +241,14 @@ public class Code06_TreeDistance1 {
 		dfs2(u, 0, 0);
 		Arrays.sort(nodeArr, 1, cnta + 1);
 		top = 0;
+		// 所有点的编号，从左往右遍历
+		// 找右侧最近的、距离 <= dist的点，去生成点对
 		for (int i = 1; i <= cnta; i++) {
 			stackAdd(nodeArr[i]);
 		}
 		top = 0;
+		// 所有点的编号，从右往左遍历
+		// 找左侧最近的、距离 <= dist的点，去生成点对
 		for (int i = cnta; i >= 1; i--) {
 			stackAdd(nodeArr[i]);
 		}
@@ -255,12 +266,12 @@ public class Code06_TreeDistance1 {
 	}
 
 	public static void up(int i) {
-		minv[i] = Math.min(minv[i << 1], minv[i << 1 | 1]);
+		minTree[i] = Math.min(minTree[i << 1], minTree[i << 1 | 1]);
 	}
 
 	public static void build(int l, int r, int i) {
 		if (l == r) {
-			minv[i] = INF;
+			minTree[i] = INF;
 		} else {
 			int mid = (l + r) >> 1;
 			build(l, mid, i << 1);
@@ -271,7 +282,7 @@ public class Code06_TreeDistance1 {
 
 	public static void update(int jobi, long jobv, int l, int r, int i) {
 		if (l == r) {
-			minv[i] = Math.min(minv[i], jobv);
+			minTree[i] = Math.min(minTree[i], jobv);
 		} else {
 			int mid = (l + r) >> 1;
 			if (jobi <= mid) {
@@ -285,7 +296,7 @@ public class Code06_TreeDistance1 {
 
 	public static long query(int jobl, int jobr, int l, int r, int i) {
 		if (jobl <= l && r <= jobr) {
-			return minv[i];
+			return minTree[i];
 		}
 		long ans = INF;
 		int mid = (l + r) >> 1;
@@ -301,11 +312,11 @@ public class Code06_TreeDistance1 {
 	public static void compute() {
 		solve(getCentroid(1, 0));
 		sortQuery(1, m);
-		sortKey(1, cntk);
+		sortPair(1, cntp);
 		build(1, n, 1);
 		for (int i = 1, j = 1; i <= m; i++) {
-			for (; j <= cntk && keyb[j] <= qy[i]; j++) {
-				update(keya[j], keyDist[j], 1, n, 1);
+			for (; j <= cntp && pb[j] <= qy[i]; j++) {
+				update(pa[j], pdist[j], 1, n, 1);
 			}
 			if (qx[i] == qy[i]) {
 				ans[qid[i]] = -1;
