@@ -1,12 +1,14 @@
-package class190;
+package class189;
 
-// 缩点结合动态规划模版题，java版
-// 给定一张n个点，m条边的有向图，每个点给定非负点权
-// 如果重复经过一个点，点权只获得一次
-// 找到一条路径，使得点权累加和最大，打印这个值
-// 1 <= n <= 10^4
-// 1 <= m <= 10^5
-// 测试链接 : https://www.luogu.com.cn/problem/P3387
+// 间谍网络，java版
+// 一共有n个间谍，其中有p个间谍可以贿赂，给定各自的价格，剩下的间谍不能贿赂
+// 然后给定m个控制关系，控制关系是单向的，也是可传递的
+// 如果间谍a能控制间谍b，间谍b能控制间谍c，那么间谍a就能控制间谍c
+// 当你贿赂了某个间谍，该间谍连同他能控制的所有人，都能被你控制
+// 如果你不能控制所有间谍，打印"NO"，然后打印不能控制的间谍中，最小的编号
+// 如果你可以控制所有间谍，打印"YES"，然后打印需要花费的最少钱数
+// 1 <= n <= 3000    0 <= 各自的价格 <= 20000    1 <= m <= 8000
+// 测试链接 : https://www.luogu.com.cn/problem/P1262
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
@@ -14,13 +16,14 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-public class Code01_CondenseTopo1 {
+public class Code07_Spy1 {
 
-	public static int MAXN = 10001;
-	public static int MAXM = 100001;
-	public static int n, m;
+	public static int MAXN = 3001;
+	public static int MAXM = 8001;
+	public static int INF = 1000000001;
+	public static int n, p, m;
 
-	public static int[] arr = new int[MAXN];
+	public static int[] cost = new int[MAXN];
 	public static int[] a = new int[MAXM];
 	public static int[] b = new int[MAXM];
 
@@ -37,12 +40,10 @@ public class Code01_CondenseTopo1 {
 	public static int top;
 
 	public static int[] belong = new int[MAXN];
-	public static int[] sum = new int[MAXN];
+	public static int[] minVal = new int[MAXN];
 	public static int sccCnt;
 
 	public static int[] indegree = new int[MAXN];
-	public static int[] que = new int[MAXN];
-	public static int[] dp = new int[MAXN];
 
 	public static void addEdge(int u, int v) {
 		nxt[++cntg] = head[u];
@@ -66,96 +67,68 @@ public class Code01_CondenseTopo1 {
 		}
 		if (dfn[u] == low[u]) {
 			sccCnt++;
+			minVal[sccCnt] = INF;
 			int pop;
 			do {
 				pop = sta[top--];
 				belong[pop] = sccCnt;
-				sum[sccCnt] += arr[pop];
+				minVal[sccCnt] = Math.min(minVal[sccCnt], cost[pop]);
 			} while (pop != u);
 		}
-	}
-
-	public static void condense() {
-		cntg = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			head[i] = 0;
-		}
-		for (int i = 1; i <= m; i++) {
-			int scc1 = belong[a[i]];
-			int scc2 = belong[b[i]];
-			if (scc1 != scc2) {
-				indegree[scc2]++;
-				addEdge(scc1, scc2);
-			}
-		}
-	}
-
-	// 拓扑排序的写法
-	public static int topo() {
-		int l = 1, r = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			if (indegree[i] == 0) {
-				dp[i] = sum[i];
-				que[++r] = i;
-			}
-		}
-		while (l <= r) {
-			int u = que[l++];
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
-				if (--indegree[v] == 0) {
-					que[++r] = v;
-				}
-			}
-		}
-		int ans = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			ans = Math.max(ans, dp[i]);
-		}
-		return ans;
-	}
-
-	// 直接转移的写法
-	public static int dpOnDAG() {
-		for (int u = sccCnt; u > 0; u--) {
-			if (indegree[u] == 0) {
-				dp[u] = sum[u];
-			}
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
-			}
-		}
-		int ans = 0;
-		for (int u = 1; u <= sccCnt; u++) {
-			ans = Math.max(ans, dp[u]);
-		}
-		return ans;
 	}
 
 	public static void main(String[] args) throws Exception {
 		FastReader in = new FastReader(System.in);
 		PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
 		n = in.nextInt();
-		m = in.nextInt();
+		p = in.nextInt();
 		for (int i = 1; i <= n; i++) {
-			arr[i] = in.nextInt();
+			cost[i] = INF;
 		}
+		for (int i = 1, u, c; i <= p; i++) {
+			u = in.nextInt();
+			c = in.nextInt();
+			cost[u] = c;
+		}
+		m = in.nextInt();
 		for (int i = 1; i <= m; i++) {
 			a[i] = in.nextInt();
 			b[i] = in.nextInt();
 			addEdge(a[i], b[i]);
 		}
 		for (int i = 1; i <= n; i++) {
-			if (dfn[i] == 0) {
+			if (cost[i] != INF && dfn[i] == 0) {
 				tarjan(i);
 			}
 		}
-		condense();
-		// int ans = topo();
-		int ans = dpOnDAG();
-		out.println(ans);
+		boolean check = true;
+		int ans = 0;
+		for (int i = 1; i <= n; i++) {
+			if (belong[i] == 0) {
+				check = false;
+				ans = i;
+				break;
+			}
+		}
+		if (!check) {
+			out.println("NO");
+			out.println(ans);
+		} else {
+			for (int i = 1; i <= m; i++) {
+				int scc1 = belong[a[i]];
+				int scc2 = belong[b[i]];
+				if (scc1 != scc2) {
+					indegree[scc2]++;
+				}
+			}
+			for (int i = 1; i <= sccCnt; i++) {
+				if (indegree[i] == 0) {
+					ans += minVal[i];
+				}
+			}
+			out.println("YES");
+			out.println(ans);
+		}
 		out.flush();
 		out.close();
 	}

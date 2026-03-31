@@ -1,28 +1,23 @@
-package class190;
+package class189;
 
-// 最大半连通子图，java版
-// 有向图中节点u和v，只要其中一点能到达另一点，就说两点是半连通的
-// 如果一个有向图，任意两点都是半连通的，这样的有向图就是半连通图
-// 有向图中的一个点集，该点集中只要某两点在原图中有边，那么这条边就保留，则可以得到一个子图
-// 如果该子图既是半连通图，又有节点数量最多，那么这个子图就是原图的最大半连通子图
-// 给定一张n个点，m条边的有向图，打印最大半连通子图的大小
-// 可能存在多个最大半连通子图，打印这个数量，数量对给定的数字x取余
+// 消息扩散，java版
+// 一共有n个城市，给定m条道路，道路可以传递消息，但道路是单向
+// 你有一个消息，需要让所有城市都收到，计算至少要在几个城市发布该消息
 // 1 <= n <= 10^5
-// 1 <= m <= 10^6
-// 测试链接 : https://www.luogu.com.cn/problem/P2272
+// 1 <= m <= 5 * 10^5
+// 测试链接 : https://www.luogu.com.cn/problem/P2002
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.Arrays;
 
-public class Code05_MaximumSemi1 {
+public class Code05_NewsSpread1 {
 
 	public static int MAXN = 100001;
-	public static int MAXM = 1000001;
-	public static int n, m, x;
+	public static int MAXM = 500001;
+	public static int n, m;
 	public static int[] a = new int[MAXM];
 	public static int[] b = new int[MAXM];
 
@@ -39,17 +34,9 @@ public class Code05_MaximumSemi1 {
 	public static int top;
 
 	public static int[] belong = new int[MAXN];
-	public static int[] sccSiz = new int[MAXN];
 	public static int sccCnt;
 
-	public static long[] edgeArr = new long[MAXM];
-	public static int cnte;
-
 	public static int[] indegree = new int[MAXN];
-	public static int[] dpSum = new int[MAXN];
-	public static int[] dpCnt = new int[MAXN];
-
-	public static int ans1, ans2;
 
 	// 迭代版需要的栈，讲解118讲了递归改迭代的技巧
 	public static int[][] stack = new int[MAXN][3];
@@ -93,12 +80,10 @@ public class Code05_MaximumSemi1 {
 		}
 		if (dfn[u] == low[u]) {
 			sccCnt++;
-			sccSiz[sccCnt] = 0;
 			int pop;
 			do {
 				pop = sta[top--];
 				belong[pop] = sccCnt;
-				sccSiz[sccCnt]++;
 			} while (pop != u);
 		}
 	}
@@ -135,67 +120,12 @@ public class Code05_MaximumSemi1 {
 			} else {
 				if (dfn[u] == low[u]) {
 					sccCnt++;
-					sccSiz[sccCnt] = 0;
 					int pop;
 					do {
 						pop = sta[top--];
 						belong[pop] = sccCnt;
-						sccSiz[sccCnt]++;
 					} while (pop != u);
 				}
-			}
-		}
-	}
-
-	public static void condense() {
-		cntg = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			head[i] = 0;
-		}
-		for (int i = 1; i <= m; i++) {
-			int scc1 = belong[a[i]];
-			int scc2 = belong[b[i]];
-			if (scc1 != scc2) {
-				edgeArr[++cnte] = ((long) scc1 << 32) | scc2;
-			}
-		}
-		Arrays.sort(edgeArr, 1, cnte + 1);
-		long pre = 0, cur;
-		for (int i = 1; i <= cnte; i++) {
-			cur = edgeArr[i];
-			if (cur != pre) {
-				int scc1 = (int) (cur >>> 32);
-				int scc2 = (int) (cur & 0xffffffffL);
-				indegree[scc2]++;
-				addEdge(scc1, scc2);
-				pre = cur;
-			}
-		}
-	}
-
-	public static void dpOnDAG() {
-		for (int u = sccCnt; u > 0; u--) {
-			if (indegree[u] == 0) {
-				dpSum[u] = sccSiz[u];
-				dpCnt[u] = 1;
-			}
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				if (dpSum[v] < dpSum[u] + sccSiz[v]) {
-					dpSum[v] = dpSum[u] + sccSiz[v];
-					dpCnt[v] = dpCnt[u];
-				} else if (dpSum[v] == dpSum[u] + sccSiz[v]) {
-					dpCnt[v] = (dpCnt[v] + dpCnt[u]) % x;
-				}
-			}
-		}
-		ans1 = ans2 = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			if (dpSum[i] > ans1) {
-				ans1 = dpSum[i];
-				ans2 = dpCnt[i];
-			} else if (dpSum[i] == ans1) {
-				ans2 = (ans2 + dpCnt[i]) % x;
 			}
 		}
 	}
@@ -205,7 +135,6 @@ public class Code05_MaximumSemi1 {
 		PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
 		n = in.nextInt();
 		m = in.nextInt();
-		x = in.nextInt();
 		for (int i = 1; i <= m; i++) {
 			a[i] = in.nextInt();
 			b[i] = in.nextInt();
@@ -217,10 +146,20 @@ public class Code05_MaximumSemi1 {
 				tarjan2(i);
 			}
 		}
-		condense();
-		dpOnDAG();
-		out.println(ans1);
-		out.println(ans2);
+		for (int i = 1; i <= m; i++) {
+			int scc1 = belong[a[i]];
+			int scc2 = belong[b[i]];
+			if (scc1 != scc2) {
+				indegree[scc2]++;
+			}
+		}
+		int ans = 0;
+		for (int i = 1; i <= sccCnt; i++) {
+			if (indegree[i] == 0) {
+				ans++;
+			}
+		}
+		out.println(ans);
 		out.flush();
 		out.close();
 	}

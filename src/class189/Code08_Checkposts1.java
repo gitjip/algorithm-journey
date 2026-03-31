@@ -1,12 +1,14 @@
-package class190;
+package class189;
 
-// 缩点结合动态规划模版题，java版
-// 给定一张n个点，m条边的有向图，每个点给定非负点权
-// 如果重复经过一个点，点权只获得一次
-// 找到一条路径，使得点权累加和最大，打印这个值
-// 1 <= n <= 10^4
-// 1 <= m <= 10^5
-// 测试链接 : https://www.luogu.com.cn/problem/P3387
+// 检查站，java版
+// 给定一张n个点，m条边的有向图，每个点有点权
+// 一个强连通分量内部，选点权最小的点，就能控制该连通分量里的所有点
+// 你的目的是选择若干点之后，图上所有的点都能控制，打印最小点权和
+// 打印选择点的方案数，方案数可能较大，对 1000000007 取余
+// 1 <= n <= 10^5
+// 1 <= m <= 3 * 10^5
+// 测试链接 : https://www.luogu.com.cn/problem/CF427C
+// 测试链接 : https://codeforces.com/problemset/problem/427/C
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
@@ -14,15 +16,13 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-public class Code01_CondenseTopo1 {
+public class Code08_Checkposts1 {
 
-	public static int MAXN = 10001;
-	public static int MAXM = 100001;
+	public static int MAXN = 100001;
+	public static int MAXM = 300001;
+	public static int MOD = 1000000007;
 	public static int n, m;
-
-	public static int[] arr = new int[MAXN];
-	public static int[] a = new int[MAXM];
-	public static int[] b = new int[MAXM];
+	public static int[] val = new int[MAXN];
 
 	public static int[] head = new int[MAXN];
 	public static int[] nxt = new int[MAXM];
@@ -37,12 +37,9 @@ public class Code01_CondenseTopo1 {
 	public static int top;
 
 	public static int[] belong = new int[MAXN];
-	public static int[] sum = new int[MAXN];
+	public static int[] minVal = new int[MAXN];
+	public static int[] minCnt = new int[MAXN];
 	public static int sccCnt;
-
-	public static int[] indegree = new int[MAXN];
-	public static int[] que = new int[MAXN];
-	public static int[] dp = new int[MAXN];
 
 	public static void addEdge(int u, int v) {
 		nxt[++cntg] = head[u];
@@ -66,96 +63,46 @@ public class Code01_CondenseTopo1 {
 		}
 		if (dfn[u] == low[u]) {
 			sccCnt++;
+			minVal[sccCnt] = 1000000001;
+			minCnt[sccCnt] = 0;
 			int pop;
 			do {
 				pop = sta[top--];
 				belong[pop] = sccCnt;
-				sum[sccCnt] += arr[pop];
+				if (minVal[sccCnt] > val[pop]) {
+					minVal[sccCnt] = val[pop];
+					minCnt[sccCnt] = 1;
+				} else if (minVal[sccCnt] == val[pop]) {
+					minCnt[sccCnt]++;
+				}
 			} while (pop != u);
 		}
-	}
-
-	public static void condense() {
-		cntg = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			head[i] = 0;
-		}
-		for (int i = 1; i <= m; i++) {
-			int scc1 = belong[a[i]];
-			int scc2 = belong[b[i]];
-			if (scc1 != scc2) {
-				indegree[scc2]++;
-				addEdge(scc1, scc2);
-			}
-		}
-	}
-
-	// 拓扑排序的写法
-	public static int topo() {
-		int l = 1, r = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			if (indegree[i] == 0) {
-				dp[i] = sum[i];
-				que[++r] = i;
-			}
-		}
-		while (l <= r) {
-			int u = que[l++];
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
-				if (--indegree[v] == 0) {
-					que[++r] = v;
-				}
-			}
-		}
-		int ans = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			ans = Math.max(ans, dp[i]);
-		}
-		return ans;
-	}
-
-	// 直接转移的写法
-	public static int dpOnDAG() {
-		for (int u = sccCnt; u > 0; u--) {
-			if (indegree[u] == 0) {
-				dp[u] = sum[u];
-			}
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
-			}
-		}
-		int ans = 0;
-		for (int u = 1; u <= sccCnt; u++) {
-			ans = Math.max(ans, dp[u]);
-		}
-		return ans;
 	}
 
 	public static void main(String[] args) throws Exception {
 		FastReader in = new FastReader(System.in);
 		PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
 		n = in.nextInt();
-		m = in.nextInt();
 		for (int i = 1; i <= n; i++) {
-			arr[i] = in.nextInt();
+			val[i] = in.nextInt();
 		}
-		for (int i = 1; i <= m; i++) {
-			a[i] = in.nextInt();
-			b[i] = in.nextInt();
-			addEdge(a[i], b[i]);
+		m = in.nextInt();
+		for (int i = 1, u, v; i <= m; i++) {
+			u = in.nextInt();
+			v = in.nextInt();
+			addEdge(u, v);
 		}
 		for (int i = 1; i <= n; i++) {
 			if (dfn[i] == 0) {
 				tarjan(i);
 			}
 		}
-		condense();
-		// int ans = topo();
-		int ans = dpOnDAG();
-		out.println(ans);
+		long ans1 = 0, ans2 = 1;
+		for (int i = 1; i <= sccCnt; i++) {
+			ans1 += minVal[i];
+			ans2 = (ans2 * minCnt[i]) % MOD;
+		}
+		out.println(ans1 + " " + ans2);
 		out.flush();
 		out.close();
 	}

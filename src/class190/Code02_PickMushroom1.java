@@ -1,6 +1,13 @@
 package class190;
 
 // 采蘑菇，java版
+// 给定一张n个点，m条边的有向图，每条边有初始收益、恢复系数两种边权
+// 初始收益为非负整数，恢复系数范围[0, 0.8]，并且最多有一位小数
+// 比如，如果重复走过一条边，该边的初始收益为10，恢复系数为0.6
+// 那么依次获得的收益为，10、6、3、1、0，随后重复经过就没有收益了
+// 给定起点s，找到一条必须从s出发的路径，打印收益累加和的最大值
+// 1 <= n <= 8 * 10^4
+// 1 <= m <= 2 * 10^5
 // 测试链接 : https://www.luogu.com.cn/problem/P2656
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
@@ -31,7 +38,6 @@ public class Code02_PickMushroom1 {
 	public static int[] low = new int[MAXN];
 	public static int cntd;
 
-	public static boolean[] ins = new boolean[MAXN];
 	public static int[] sta = new int[MAXN];
 	public static int top;
 
@@ -39,9 +45,6 @@ public class Code02_PickMushroom1 {
 	public static int sccCnt;
 
 	public static int[] sum = new int[MAXN];
-	public static int[] indegree = new int[MAXN];
-
-	public static int[] que = new int[MAXN];
 	public static int[] dp = new int[MAXN];
 
 	// 迭代版需要的栈，讲解118讲了递归改迭代的技巧
@@ -74,14 +77,13 @@ public class Code02_PickMushroom1 {
 	public static void tarjan1(int u) {
 		dfn[u] = low[u] = ++cntd;
 		sta[++top] = u;
-		ins[u] = true;
 		for (int e = head[u]; e > 0; e = nxt[e]) {
 			int v = to[e];
 			if (dfn[v] == 0) {
 				tarjan1(v);
 				low[u] = Math.min(low[u], low[v]);
 			} else {
-				if (ins[v]) {
+				if (belong[v] == 0) {
 					low[u] = Math.min(low[u], dfn[v]);
 				}
 			}
@@ -92,7 +94,6 @@ public class Code02_PickMushroom1 {
 			do {
 				pop = sta[top--];
 				belong[pop] = sccCnt;
-				ins[pop] = false;
 			} while (pop != u);
 		}
 	}
@@ -107,14 +108,13 @@ public class Code02_PickMushroom1 {
 			if (status == -1) {
 				dfn[u] = low[u] = ++cntd;
 				sta[++top] = u;
-				ins[u] = true;
 				e = head[u];
 			} else {
 				v = to[e];
 				if (status == 0) {
 					low[u] = Math.min(low[u], low[v]);
 				}
-				if (status == 1 && ins[v]) {
+				if (status == 1 && belong[v] == 0) {
 					low[u] = Math.min(low[u], dfn[v]);
 				}
 				e = nxt[e];
@@ -134,7 +134,6 @@ public class Code02_PickMushroom1 {
 					do {
 						pop = sta[top--];
 						belong[pop] = sccCnt;
-						ins[pop] = false;
 					} while (pop != u);
 				}
 			}
@@ -158,36 +157,27 @@ public class Code02_PickMushroom1 {
 						val = val * rec / 10;
 					}
 				} else {
-					indegree[scc2]++;
 					addEdge(scc1, scc2, val);
 				}
 			}
 		}
 	}
 
-	public static int topo() {
-		for (int i = 1; i <= sccCnt; i++) {
-			dp[i] = -INF;
+	public static int dpOnDAG() {
+		for (int u = 1; u <= sccCnt; u++) {
+			dp[u] = -INF;
 		}
 		dp[belong[s]] = sum[belong[s]];
-		int l = 1, r = 0;
-		que[++r] = belong[s];
-		while (l <= r) {
-			int u = que[l++];
+		for (int u = sccCnt; u > 0; u--) {
 			for (int e = head[u]; e > 0; e = nxt[e]) {
 				int v = to[e];
 				int w = weight[e];
 				dp[v] = Math.max(dp[v], dp[u] + w + sum[v]);
-				if (--indegree[v] == 0) {
-					que[++r] = v;
-				}
 			}
 		}
 		int ans = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			if (dp[i] != -INF) {
-				ans = Math.max(ans, dp[i]);
-			}
+		for (int u = 1; u <= sccCnt; u++) {
+			ans = Math.max(ans, dp[u]);
 		}
 		return ans;
 	}
@@ -209,7 +199,7 @@ public class Code02_PickMushroom1 {
 		// tarjan1(s);
 		tarjan2(s);
 		condense();
-		int ans = topo();
+		int ans = dpOnDAG();
 		out.println(ans);
 		out.flush();
 		out.close();

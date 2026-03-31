@@ -1,12 +1,12 @@
-package class190;
+package class189;
 
-// 缩点结合动态规划模版题，java版
-// 给定一张n个点，m条边的有向图，每个点给定非负点权
-// 如果重复经过一个点，点权只获得一次
-// 找到一条路径，使得点权累加和最大，打印这个值
-// 1 <= n <= 10^4
-// 1 <= m <= 10^5
-// 测试链接 : https://www.luogu.com.cn/problem/P3387
+// 任意两点都有路，java版
+// 给定一张n个点，m条边的有向图
+// 两点u、v，不管是从u出发能到达v，还是从v出发能到达u，都叫两点间有路
+// 判断这个有向图是否能做到，任意两点都有路，能打印"Yes"，不能打印"No"
+// 1 <= n <= 1000
+// 1 <= m <= 6000
+// 测试链接 : https://www.luogu.com.cn/problem/P10944
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
@@ -14,13 +14,11 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-public class Code01_CondenseTopo1 {
+public class Code09_HasPath1 {
 
-	public static int MAXN = 10001;
-	public static int MAXM = 100001;
-	public static int n, m;
-
-	public static int[] arr = new int[MAXN];
+	public static int MAXN = 1001;
+	public static int MAXM = 6001;
+	public static int t, n, m;
 	public static int[] a = new int[MAXM];
 	public static int[] b = new int[MAXM];
 
@@ -37,12 +35,10 @@ public class Code01_CondenseTopo1 {
 	public static int top;
 
 	public static int[] belong = new int[MAXN];
-	public static int[] sum = new int[MAXN];
 	public static int sccCnt;
 
 	public static int[] indegree = new int[MAXN];
 	public static int[] que = new int[MAXN];
-	public static int[] dp = new int[MAXN];
 
 	public static void addEdge(int u, int v) {
 		nxt[++cntg] = head[u];
@@ -70,7 +66,6 @@ public class Code01_CondenseTopo1 {
 			do {
 				pop = sta[top--];
 				belong[pop] = sccCnt;
-				sum[sccCnt] += arr[pop];
 			} while (pop != u);
 		}
 	}
@@ -90,72 +85,54 @@ public class Code01_CondenseTopo1 {
 		}
 	}
 
-	// 拓扑排序的写法
-	public static int topo() {
+	public static boolean topo() {
 		int l = 1, r = 0;
 		for (int i = 1; i <= sccCnt; i++) {
 			if (indegree[i] == 0) {
-				dp[i] = sum[i];
 				que[++r] = i;
 			}
 		}
 		while (l <= r) {
+			int siz = r - l + 1;
+			if (siz > 1) {
+				return false;
+			}
 			int u = que[l++];
 			for (int e = head[u]; e > 0; e = nxt[e]) {
 				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
 				if (--indegree[v] == 0) {
 					que[++r] = v;
 				}
 			}
 		}
-		int ans = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			ans = Math.max(ans, dp[i]);
-		}
-		return ans;
-	}
-
-	// 直接转移的写法
-	public static int dpOnDAG() {
-		for (int u = sccCnt; u > 0; u--) {
-			if (indegree[u] == 0) {
-				dp[u] = sum[u];
-			}
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
-			}
-		}
-		int ans = 0;
-		for (int u = 1; u <= sccCnt; u++) {
-			ans = Math.max(ans, dp[u]);
-		}
-		return ans;
+		return true;
 	}
 
 	public static void main(String[] args) throws Exception {
 		FastReader in = new FastReader(System.in);
 		PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
-		n = in.nextInt();
-		m = in.nextInt();
-		for (int i = 1; i <= n; i++) {
-			arr[i] = in.nextInt();
-		}
-		for (int i = 1; i <= m; i++) {
-			a[i] = in.nextInt();
-			b[i] = in.nextInt();
-			addEdge(a[i], b[i]);
-		}
-		for (int i = 1; i <= n; i++) {
-			if (dfn[i] == 0) {
-				tarjan(i);
+		t = in.nextInt();
+		for (int c = 1; c <= t; c++) {
+			n = in.nextInt();
+			m = in.nextInt();
+			cntg = cntd = sccCnt = 0;
+			for (int i = 1; i <= n; i++) {
+				head[i] = dfn[i] = belong[i] = indegree[i] = 0;
 			}
+			for (int i = 1; i <= m; i++) {
+				a[i] = in.nextInt();
+				b[i] = in.nextInt();
+				addEdge(a[i], b[i]);
+			}
+			for (int i = 1; i <= n; i++) {
+				if (dfn[i] == 0) {
+					tarjan(i);
+				}
+			}
+			condense();
+			boolean ans = topo();
+			out.println(ans ? "Yes" : "No");
 		}
-		condense();
-		// int ans = topo();
-		int ans = dpOnDAG();
-		out.println(ans);
 		out.flush();
 		out.close();
 	}

@@ -1,12 +1,11 @@
-package class190;
+package class192;
 
-// 缩点结合动态规划模版题，java版
-// 给定一张n个点，m条边的有向图，每个点给定非负点权
-// 如果重复经过一个点，点权只获得一次
-// 找到一条路径，使得点权累加和最大，打印这个值
-// 1 <= n <= 10^4
-// 1 <= m <= 10^5
-// 测试链接 : https://www.luogu.com.cn/problem/P3387
+// 最多的桥，java版
+// 给定一张无向图，一共n个点、m条边，保证所有点连通
+// 沿途的边只能经过一次，找到能通过最多割边的路径，打印割边的数量
+// 1 <= n、m <= 3 * 10^5
+// 测试链接 : https://www.luogu.com.cn/problem/CF1000E
+// 测试链接 : https://codeforces.com/problemset/problem/1000/E
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
@@ -14,19 +13,17 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-public class Code01_CondenseTopo1 {
+public class Code02_MostBridges1 {
 
-	public static int MAXN = 10001;
-	public static int MAXM = 100001;
+	public static int MAXN = 300001;
+	public static int MAXM = 300001;
 	public static int n, m;
-
-	public static int[] arr = new int[MAXN];
 	public static int[] a = new int[MAXM];
 	public static int[] b = new int[MAXM];
 
 	public static int[] head = new int[MAXN];
-	public static int[] nxt = new int[MAXM];
-	public static int[] to = new int[MAXM];
+	public static int[] nxt = new int[MAXM << 1];
+	public static int[] to = new int[MAXM << 1];
 	public static int cntg;
 
 	public static int[] dfn = new int[MAXN];
@@ -37,12 +34,10 @@ public class Code01_CondenseTopo1 {
 	public static int top;
 
 	public static int[] belong = new int[MAXN];
-	public static int[] sum = new int[MAXN];
-	public static int sccCnt;
+	public static int ebccCnt;
 
-	public static int[] indegree = new int[MAXN];
-	public static int[] que = new int[MAXN];
-	public static int[] dp = new int[MAXN];
+	public static int[] dist = new int[MAXN];
+	public static int diameter;
 
 	public static void addEdge(int u, int v) {
 		nxt[++cntg] = head[u];
@@ -50,112 +45,73 @@ public class Code01_CondenseTopo1 {
 		head[u] = cntg;
 	}
 
-	public static void tarjan(int u) {
+	public static void tarjan(int u, int preEdge) {
 		dfn[u] = low[u] = ++cntd;
 		sta[++top] = u;
 		for (int e = head[u]; e > 0; e = nxt[e]) {
+			if ((e ^ 1) == preEdge) {
+				continue;
+			}
 			int v = to[e];
 			if (dfn[v] == 0) {
-				tarjan(v);
+				tarjan(v, e);
 				low[u] = Math.min(low[u], low[v]);
 			} else {
-				if (belong[v] == 0) {
-					low[u] = Math.min(low[u], dfn[v]);
-				}
+				low[u] = Math.min(low[u], dfn[v]);
 			}
 		}
 		if (dfn[u] == low[u]) {
-			sccCnt++;
+			ebccCnt++;
 			int pop;
 			do {
 				pop = sta[top--];
-				belong[pop] = sccCnt;
-				sum[sccCnt] += arr[pop];
+				belong[pop] = ebccCnt;
 			} while (pop != u);
 		}
 	}
 
 	public static void condense() {
 		cntg = 0;
-		for (int i = 1; i <= sccCnt; i++) {
+		for (int i = 1; i <= ebccCnt; i++) {
 			head[i] = 0;
 		}
 		for (int i = 1; i <= m; i++) {
-			int scc1 = belong[a[i]];
-			int scc2 = belong[b[i]];
-			if (scc1 != scc2) {
-				indegree[scc2]++;
-				addEdge(scc1, scc2);
+			int ebcc1 = belong[a[i]];
+			int ebcc2 = belong[b[i]];
+			if (ebcc1 != ebcc2) {
+				addEdge(ebcc1, ebcc2);
+				addEdge(ebcc2, ebcc1);
 			}
 		}
 	}
 
-	// 拓扑排序的写法
-	public static int topo() {
-		int l = 1, r = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			if (indegree[i] == 0) {
-				dp[i] = sum[i];
-				que[++r] = i;
+	public static void dpOnTree(int u, int fa) {
+		for (int e = head[u]; e > 0; e = nxt[e]) {
+			int v = to[e];
+			if (v != fa) {
+				dpOnTree(v, u);
+				diameter = Math.max(diameter, dist[u] + dist[v] + 1);
+				dist[u] = Math.max(dist[u], dist[v] + 1);
 			}
 		}
-		while (l <= r) {
-			int u = que[l++];
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
-				if (--indegree[v] == 0) {
-					que[++r] = v;
-				}
-			}
-		}
-		int ans = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			ans = Math.max(ans, dp[i]);
-		}
-		return ans;
-	}
-
-	// 直接转移的写法
-	public static int dpOnDAG() {
-		for (int u = sccCnt; u > 0; u--) {
-			if (indegree[u] == 0) {
-				dp[u] = sum[u];
-			}
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
-			}
-		}
-		int ans = 0;
-		for (int u = 1; u <= sccCnt; u++) {
-			ans = Math.max(ans, dp[u]);
-		}
-		return ans;
 	}
 
 	public static void main(String[] args) throws Exception {
 		FastReader in = new FastReader(System.in);
 		PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
+		cntg = 1;
 		n = in.nextInt();
 		m = in.nextInt();
-		for (int i = 1; i <= n; i++) {
-			arr[i] = in.nextInt();
-		}
 		for (int i = 1; i <= m; i++) {
 			a[i] = in.nextInt();
 			b[i] = in.nextInt();
 			addEdge(a[i], b[i]);
+			addEdge(b[i], a[i]);
 		}
-		for (int i = 1; i <= n; i++) {
-			if (dfn[i] == 0) {
-				tarjan(i);
-			}
-		}
+		tarjan(1, 0);
 		condense();
-		// int ans = topo();
-		int ans = dpOnDAG();
-		out.println(ans);
+		dpOnTree(1, 0);
+		out.println(diameter);
 		out.flush();
 		out.close();
 	}

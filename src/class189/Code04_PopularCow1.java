@@ -1,12 +1,13 @@
-package class190;
+package class189;
 
-// 缩点结合动态规划模版题，java版
-// 给定一张n个点，m条边的有向图，每个点给定非负点权
-// 如果重复经过一个点，点权只获得一次
-// 找到一条路径，使得点权累加和最大，打印这个值
+// 受欢迎的牛，java版
+// 一共有n只牛，牛和牛之间存在喜欢关系，喜欢关系是有向的
+// 喜欢关系可以传递，如果a喜欢b，b喜欢c，那么a也喜欢c
+// 每只牛都喜欢自己，如果某只牛被所有牛喜欢，那么这只牛是明星
+// 给定m个喜欢关系，打印明星的数量
 // 1 <= n <= 10^4
-// 1 <= m <= 10^5
-// 测试链接 : https://www.luogu.com.cn/problem/P3387
+// 1 <= m <= 5 * 10^4
+// 测试链接 : https://www.luogu.com.cn/problem/P2341
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
@@ -14,13 +15,11 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-public class Code01_CondenseTopo1 {
+public class Code04_PopularCow1 {
 
 	public static int MAXN = 10001;
-	public static int MAXM = 100001;
+	public static int MAXM = 50001;
 	public static int n, m;
-
-	public static int[] arr = new int[MAXN];
 	public static int[] a = new int[MAXM];
 	public static int[] b = new int[MAXM];
 
@@ -37,12 +36,10 @@ public class Code01_CondenseTopo1 {
 	public static int top;
 
 	public static int[] belong = new int[MAXN];
-	public static int[] sum = new int[MAXN];
+	public static int[] sccSiz = new int[MAXN];
 	public static int sccCnt;
 
-	public static int[] indegree = new int[MAXN];
-	public static int[] que = new int[MAXN];
-	public static int[] dp = new int[MAXN];
+	public static int[] outdegree = new int[MAXN];
 
 	public static void addEdge(int u, int v) {
 		nxt[++cntg] = head[u];
@@ -70,68 +67,9 @@ public class Code01_CondenseTopo1 {
 			do {
 				pop = sta[top--];
 				belong[pop] = sccCnt;
-				sum[sccCnt] += arr[pop];
+				sccSiz[sccCnt]++;
 			} while (pop != u);
 		}
-	}
-
-	public static void condense() {
-		cntg = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			head[i] = 0;
-		}
-		for (int i = 1; i <= m; i++) {
-			int scc1 = belong[a[i]];
-			int scc2 = belong[b[i]];
-			if (scc1 != scc2) {
-				indegree[scc2]++;
-				addEdge(scc1, scc2);
-			}
-		}
-	}
-
-	// 拓扑排序的写法
-	public static int topo() {
-		int l = 1, r = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			if (indegree[i] == 0) {
-				dp[i] = sum[i];
-				que[++r] = i;
-			}
-		}
-		while (l <= r) {
-			int u = que[l++];
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
-				if (--indegree[v] == 0) {
-					que[++r] = v;
-				}
-			}
-		}
-		int ans = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			ans = Math.max(ans, dp[i]);
-		}
-		return ans;
-	}
-
-	// 直接转移的写法
-	public static int dpOnDAG() {
-		for (int u = sccCnt; u > 0; u--) {
-			if (indegree[u] == 0) {
-				dp[u] = sum[u];
-			}
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
-			}
-		}
-		int ans = 0;
-		for (int u = 1; u <= sccCnt; u++) {
-			ans = Math.max(ans, dp[u]);
-		}
-		return ans;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -139,9 +77,6 @@ public class Code01_CondenseTopo1 {
 		PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
 		n = in.nextInt();
 		m = in.nextInt();
-		for (int i = 1; i <= n; i++) {
-			arr[i] = in.nextInt();
-		}
 		for (int i = 1; i <= m; i++) {
 			a[i] = in.nextInt();
 			b[i] = in.nextInt();
@@ -152,10 +87,25 @@ public class Code01_CondenseTopo1 {
 				tarjan(i);
 			}
 		}
-		condense();
-		// int ans = topo();
-		int ans = dpOnDAG();
-		out.println(ans);
+		for (int i = 1; i <= m; i++) {
+			int scc1 = belong[a[i]];
+			int scc2 = belong[b[i]];
+			if (scc1 != scc2) {
+				outdegree[scc1]++;
+			}
+		}
+		int num = 0, siz = 0;
+		for (int i = 1; i <= sccCnt; i++) {
+			if (outdegree[i] == 0) {
+				num++;
+				siz = sccSiz[i];
+			}
+			if (num > 1) {
+				siz = 0;
+				break;
+			}
+		}
+		out.println(siz);
 		out.flush();
 		out.close();
 	}

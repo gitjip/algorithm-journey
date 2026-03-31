@@ -1,12 +1,12 @@
-package class190;
+package class189;
 
-// 缩点结合动态规划模版题，java版
-// 给定一张n个点，m条边的有向图，每个点给定非负点权
-// 如果重复经过一个点，点权只获得一次
-// 找到一条路径，使得点权累加和最大，打印这个值
+// 校园网络，java版
+// 一共有n个节点，m条有向边，消息只能顺着有向边传递
+// 打印至少需要在几个节点投放消息，才能让所有节点，都能收到消息
+// 打印至少需要添加几条边，才能让任意两个节点之间，都能传递消息
 // 1 <= n <= 10^4
-// 1 <= m <= 10^5
-// 测试链接 : https://www.luogu.com.cn/problem/P3387
+// 1 <= m <= 5 * 10^4
+// 测试链接 : https://www.luogu.com.cn/problem/P2812
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
@@ -14,13 +14,11 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-public class Code01_CondenseTopo1 {
+public class Code06_NetworkOfSchools1 {
 
-	public static int MAXN = 10001;
-	public static int MAXM = 100001;
+	public static int MAXN = 100001;
+	public static int MAXM = 500001;
 	public static int n, m;
-
-	public static int[] arr = new int[MAXN];
 	public static int[] a = new int[MAXM];
 	public static int[] b = new int[MAXM];
 
@@ -37,12 +35,10 @@ public class Code01_CondenseTopo1 {
 	public static int top;
 
 	public static int[] belong = new int[MAXN];
-	public static int[] sum = new int[MAXN];
 	public static int sccCnt;
 
+	public static int[] outdegree = new int[MAXN];
 	public static int[] indegree = new int[MAXN];
-	public static int[] que = new int[MAXN];
-	public static int[] dp = new int[MAXN];
 
 	public static void addEdge(int u, int v) {
 		nxt[++cntg] = head[u];
@@ -70,92 +66,55 @@ public class Code01_CondenseTopo1 {
 			do {
 				pop = sta[top--];
 				belong[pop] = sccCnt;
-				sum[sccCnt] += arr[pop];
 			} while (pop != u);
 		}
-	}
-
-	public static void condense() {
-		cntg = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			head[i] = 0;
-		}
-		for (int i = 1; i <= m; i++) {
-			int scc1 = belong[a[i]];
-			int scc2 = belong[b[i]];
-			if (scc1 != scc2) {
-				indegree[scc2]++;
-				addEdge(scc1, scc2);
-			}
-		}
-	}
-
-	// 拓扑排序的写法
-	public static int topo() {
-		int l = 1, r = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			if (indegree[i] == 0) {
-				dp[i] = sum[i];
-				que[++r] = i;
-			}
-		}
-		while (l <= r) {
-			int u = que[l++];
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
-				if (--indegree[v] == 0) {
-					que[++r] = v;
-				}
-			}
-		}
-		int ans = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			ans = Math.max(ans, dp[i]);
-		}
-		return ans;
-	}
-
-	// 直接转移的写法
-	public static int dpOnDAG() {
-		for (int u = sccCnt; u > 0; u--) {
-			if (indegree[u] == 0) {
-				dp[u] = sum[u];
-			}
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
-			}
-		}
-		int ans = 0;
-		for (int u = 1; u <= sccCnt; u++) {
-			ans = Math.max(ans, dp[u]);
-		}
-		return ans;
 	}
 
 	public static void main(String[] args) throws Exception {
 		FastReader in = new FastReader(System.in);
 		PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
 		n = in.nextInt();
-		m = in.nextInt();
-		for (int i = 1; i <= n; i++) {
-			arr[i] = in.nextInt();
-		}
-		for (int i = 1; i <= m; i++) {
-			a[i] = in.nextInt();
-			b[i] = in.nextInt();
-			addEdge(a[i], b[i]);
+		m = 0;
+		for (int i = 1, x; i <= n; i++) {
+			x = in.nextInt();
+			while (x != 0) {
+				m++;
+				a[m] = i;
+				b[m] = x;
+				addEdge(a[m], b[m]);
+				x = in.nextInt();
+			}
 		}
 		for (int i = 1; i <= n; i++) {
 			if (dfn[i] == 0) {
 				tarjan(i);
 			}
 		}
-		condense();
-		// int ans = topo();
-		int ans = dpOnDAG();
-		out.println(ans);
+		if (sccCnt == 1) {
+			out.println("1");
+			out.println("0");
+		} else {
+			for (int i = 1; i <= m; i++) {
+				int scc1 = belong[a[i]];
+				int scc2 = belong[b[i]];
+				if (scc1 != scc2) {
+					outdegree[scc1]++;
+					indegree[scc2]++;
+				}
+			}
+			int outZero = 0;
+			int inZero = 0;
+			for (int i = 1; i <= sccCnt; i++) {
+				if (outdegree[i] == 0) {
+					outZero++;
+				}
+				if (indegree[i] == 0) {
+					inZero++;
+				}
+			}
+			out.println(inZero);
+			out.println(Math.max(outZero, inZero));
+		}
 		out.flush();
 		out.close();
 	}

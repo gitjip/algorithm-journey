@@ -1,34 +1,33 @@
 package class190;
 
-// 最大半连通子图，java版
-// 有向图中节点u和v，只要其中一点能到达另一点，就说两点是半连通的
-// 如果一个有向图，任意两点都是半连通的，这样的有向图就是半连通图
-// 有向图中的一个点集，该点集中只要某两点在原图中有边，那么这条边就保留，则可以得到一个子图
-// 如果该子图既是半连通图，又有节点数量最多，那么这个子图就是原图的最大半连通子图
-// 给定一张n个点，m条边的有向图，打印最大半连通子图的大小
-// 可能存在多个最大半连通子图，打印这个数量，数量对给定的数字x取余
-// 1 <= n <= 10^5
-// 1 <= m <= 10^6
-// 测试链接 : https://www.luogu.com.cn/problem/P2272
+// 糖果，java版
+// 一共n个人，每人至少得到一个糖果，一共k条要求，要求有5种类型
+// 1 u v : u的糖果 == v的糖果    2 u v : u的糖果 < v的糖果
+// 3 u v : u的糖果 >= v的糖果    4 u v : u的糖果 > v的糖果
+// 5 u v : u的糖果 <= v的糖果
+// 如果无法满足所有要求打印-1，否则打印需要的最少糖果数
+// 1 <= n、k <= 10^5
+// 测试链接 : https://www.luogu.com.cn/problem/P3275
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.Arrays;
 
-public class Code05_MaximumSemi1 {
+public class Code08_Candy1 {
 
 	public static int MAXN = 100001;
-	public static int MAXM = 1000001;
-	public static int n, m, x;
+	public static int MAXM = 200001;
+	public static int n, k, m;
 	public static int[] a = new int[MAXM];
 	public static int[] b = new int[MAXM];
+	public static int[] c = new int[MAXM];
 
 	public static int[] head = new int[MAXN];
 	public static int[] nxt = new int[MAXM];
 	public static int[] to = new int[MAXM];
+	public static int[] weight = new int[MAXM];
 	public static int cntg;
 
 	public static int[] dfn = new int[MAXN];
@@ -42,14 +41,8 @@ public class Code05_MaximumSemi1 {
 	public static int[] sccSiz = new int[MAXN];
 	public static int sccCnt;
 
-	public static long[] edgeArr = new long[MAXM];
-	public static int cnte;
-
 	public static int[] indegree = new int[MAXN];
-	public static int[] dpSum = new int[MAXN];
-	public static int[] dpCnt = new int[MAXN];
-
-	public static int ans1, ans2;
+	public static long[] dp = new long[MAXN];
 
 	// 迭代版需要的栈，讲解118讲了递归改迭代的技巧
 	public static int[][] stack = new int[MAXN][3];
@@ -70,9 +63,10 @@ public class Code05_MaximumSemi1 {
 		e = stack[stacksize][2];
 	}
 
-	public static void addEdge(int u, int v) {
+	public static void addEdge(int u, int v, int w) {
 		nxt[++cntg] = head[u];
 		to[cntg] = v;
+		weight[cntg] = w;
 		head[u] = cntg;
 	}
 
@@ -147,7 +141,7 @@ public class Code05_MaximumSemi1 {
 		}
 	}
 
-	public static void condense() {
+	public static boolean condense() {
 		cntg = 0;
 		for (int i = 1; i <= sccCnt; i++) {
 			head[i] = 0;
@@ -155,61 +149,61 @@ public class Code05_MaximumSemi1 {
 		for (int i = 1; i <= m; i++) {
 			int scc1 = belong[a[i]];
 			int scc2 = belong[b[i]];
+			int w = c[i];
+			if (scc1 == scc2 && w > 0) {
+				return false;
+			}
 			if (scc1 != scc2) {
-				edgeArr[++cnte] = ((long) scc1 << 32) | scc2;
-			}
-		}
-		Arrays.sort(edgeArr, 1, cnte + 1);
-		long pre = 0, cur;
-		for (int i = 1; i <= cnte; i++) {
-			cur = edgeArr[i];
-			if (cur != pre) {
-				int scc1 = (int) (cur >>> 32);
-				int scc2 = (int) (cur & 0xffffffffL);
 				indegree[scc2]++;
-				addEdge(scc1, scc2);
-				pre = cur;
+				addEdge(scc1, scc2, w);
 			}
 		}
+		return true;
 	}
 
-	public static void dpOnDAG() {
+	public static long dpOnDAG() {
 		for (int u = sccCnt; u > 0; u--) {
 			if (indegree[u] == 0) {
-				dpSum[u] = sccSiz[u];
-				dpCnt[u] = 1;
+				dp[u] = 1;
 			}
 			for (int e = head[u]; e > 0; e = nxt[e]) {
 				int v = to[e];
-				if (dpSum[v] < dpSum[u] + sccSiz[v]) {
-					dpSum[v] = dpSum[u] + sccSiz[v];
-					dpCnt[v] = dpCnt[u];
-				} else if (dpSum[v] == dpSum[u] + sccSiz[v]) {
-					dpCnt[v] = (dpCnt[v] + dpCnt[u]) % x;
-				}
+				int w = weight[e];
+				dp[v] = Math.max(dp[v], dp[u] + w);
 			}
 		}
-		ans1 = ans2 = 0;
+		long ans = 0;
 		for (int i = 1; i <= sccCnt; i++) {
-			if (dpSum[i] > ans1) {
-				ans1 = dpSum[i];
-				ans2 = dpCnt[i];
-			} else if (dpSum[i] == ans1) {
-				ans2 = (ans2 + dpCnt[i]) % x;
-			}
+			ans += dp[i] * sccSiz[i];
 		}
+		return ans;
 	}
 
 	public static void main(String[] args) throws Exception {
 		FastReader in = new FastReader(System.in);
 		PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
 		n = in.nextInt();
-		m = in.nextInt();
-		x = in.nextInt();
+		k = in.nextInt();
+		m = 0;
+		for (int i = 1, op, u, v; i <= k; i++) {
+			op = in.nextInt();
+			u = in.nextInt();
+			v = in.nextInt();
+			if (op == 1) {
+				a[++m] = u; b[m] = v; c[m] = 0;
+				a[++m] = v; b[m] = u; c[m] = 0;
+			} else if (op == 2) {
+				a[++m] = u; b[m] = v; c[m] = 1;
+			} else if (op == 3) {
+				a[++m] = v; b[m] = u; c[m] = 0;
+			} else if (op == 4) {
+				a[++m] = v; b[m] = u; c[m] = 1;
+			} else {
+				a[++m] = u; b[m] = v; c[m] = 0;
+			}
+		}
 		for (int i = 1; i <= m; i++) {
-			a[i] = in.nextInt();
-			b[i] = in.nextInt();
-			addEdge(a[i], b[i]);
+			addEdge(a[i], b[i], c[i]);
 		}
 		for (int i = 1; i <= n; i++) {
 			if (dfn[i] == 0) {
@@ -217,10 +211,13 @@ public class Code05_MaximumSemi1 {
 				tarjan2(i);
 			}
 		}
-		condense();
-		dpOnDAG();
-		out.println(ans1);
-		out.println(ans2);
+		boolean check = condense();
+		if (!check) {
+			out.println(-1);
+		} else {
+			long ans = dpOnDAG();
+			out.println(ans);
+		}
 		out.flush();
 		out.close();
 	}

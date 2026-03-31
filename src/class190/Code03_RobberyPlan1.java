@@ -1,28 +1,28 @@
 package class190;
 
-// 最大半连通子图，java版
-// 有向图中节点u和v，只要其中一点能到达另一点，就说两点是半连通的
-// 如果一个有向图，任意两点都是半连通的，这样的有向图就是半连通图
-// 有向图中的一个点集，该点集中只要某两点在原图中有边，那么这条边就保留，则可以得到一个子图
-// 如果该子图既是半连通图，又有节点数量最多，那么这个子图就是原图的最大半连通子图
-// 给定一张n个点，m条边的有向图，打印最大半连通子图的大小
-// 可能存在多个最大半连通子图，打印这个数量，数量对给定的数字x取余
-// 1 <= n <= 10^5
-// 1 <= m <= 10^6
-// 测试链接 : https://www.luogu.com.cn/problem/P2272
+// 劫掠计划，java版
+// 一共有n个城市，给定m条有向道路，每个城市给定拥有的钱数
+// 给定起点城市s，给定p个有酒吧的城市，有酒吧的城市才能作为终点
+// 路线必须从s出发到任意终点停止，重复经过城市的话，钱仅获得一次
+// 题目保证一定存在这样的路线，打印能获得的最大钱数
+// 1 <= n、m <= 5 * 10^5
+// 测试链接 : https://www.luogu.com.cn/problem/P3627
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.Arrays;
 
-public class Code05_MaximumSemi1 {
+public class Code03_RobberyPlan1 {
 
-	public static int MAXN = 100001;
-	public static int MAXM = 1000001;
-	public static int n, m, x;
+	public static int MAXN = 500001;
+	public static int MAXM = 500001;
+	public static int INF = 1000000001;
+	public static int n, m, s, p;
+
+	public static int[] money = new int[MAXN];
+	public static boolean[] isBar = new boolean[MAXN];
 	public static int[] a = new int[MAXM];
 	public static int[] b = new int[MAXM];
 
@@ -39,17 +39,11 @@ public class Code05_MaximumSemi1 {
 	public static int top;
 
 	public static int[] belong = new int[MAXN];
-	public static int[] sccSiz = new int[MAXN];
+	public static int[] sum = new int[MAXN];
+	public static boolean[] hasBar = new boolean[MAXN];
 	public static int sccCnt;
 
-	public static long[] edgeArr = new long[MAXM];
-	public static int cnte;
-
-	public static int[] indegree = new int[MAXN];
-	public static int[] dpSum = new int[MAXN];
-	public static int[] dpCnt = new int[MAXN];
-
-	public static int ans1, ans2;
+	public static int[] dp = new int[MAXN];
 
 	// 迭代版需要的栈，讲解118讲了递归改迭代的技巧
 	public static int[][] stack = new int[MAXN][3];
@@ -93,12 +87,14 @@ public class Code05_MaximumSemi1 {
 		}
 		if (dfn[u] == low[u]) {
 			sccCnt++;
-			sccSiz[sccCnt] = 0;
+			sum[sccCnt] = 0;
+			hasBar[sccCnt] = false;
 			int pop;
 			do {
 				pop = sta[top--];
 				belong[pop] = sccCnt;
-				sccSiz[sccCnt]++;
+				sum[sccCnt] += money[pop];
+				hasBar[sccCnt] |= isBar[pop];
 			} while (pop != u);
 		}
 	}
@@ -135,12 +131,14 @@ public class Code05_MaximumSemi1 {
 			} else {
 				if (dfn[u] == low[u]) {
 					sccCnt++;
-					sccSiz[sccCnt] = 0;
+					sum[sccCnt] = 0;
+					hasBar[sccCnt] = false;
 					int pop;
 					do {
 						pop = sta[top--];
 						belong[pop] = sccCnt;
-						sccSiz[sccCnt]++;
+						sum[sccCnt] += money[pop];
+						hasBar[sccCnt] |= isBar[pop];
 					} while (pop != u);
 				}
 			}
@@ -155,49 +153,30 @@ public class Code05_MaximumSemi1 {
 		for (int i = 1; i <= m; i++) {
 			int scc1 = belong[a[i]];
 			int scc2 = belong[b[i]];
-			if (scc1 != scc2) {
-				edgeArr[++cnte] = ((long) scc1 << 32) | scc2;
-			}
-		}
-		Arrays.sort(edgeArr, 1, cnte + 1);
-		long pre = 0, cur;
-		for (int i = 1; i <= cnte; i++) {
-			cur = edgeArr[i];
-			if (cur != pre) {
-				int scc1 = (int) (cur >>> 32);
-				int scc2 = (int) (cur & 0xffffffffL);
-				indegree[scc2]++;
+			if (scc1 > 0 && scc2 > 0 && scc1 != scc2) {
 				addEdge(scc1, scc2);
-				pre = cur;
 			}
 		}
 	}
 
-	public static void dpOnDAG() {
+	public static int dpOnDAG() {
+		for (int u = 1; u <= sccCnt; u++) {
+			dp[u] = -INF;
+		}
+		dp[belong[s]] = sum[belong[s]];
 		for (int u = sccCnt; u > 0; u--) {
-			if (indegree[u] == 0) {
-				dpSum[u] = sccSiz[u];
-				dpCnt[u] = 1;
-			}
 			for (int e = head[u]; e > 0; e = nxt[e]) {
 				int v = to[e];
-				if (dpSum[v] < dpSum[u] + sccSiz[v]) {
-					dpSum[v] = dpSum[u] + sccSiz[v];
-					dpCnt[v] = dpCnt[u];
-				} else if (dpSum[v] == dpSum[u] + sccSiz[v]) {
-					dpCnt[v] = (dpCnt[v] + dpCnt[u]) % x;
-				}
+				dp[v] = Math.max(dp[v], dp[u] + sum[v]);
 			}
 		}
-		ans1 = ans2 = 0;
-		for (int i = 1; i <= sccCnt; i++) {
-			if (dpSum[i] > ans1) {
-				ans1 = dpSum[i];
-				ans2 = dpCnt[i];
-			} else if (dpSum[i] == ans1) {
-				ans2 = (ans2 + dpCnt[i]) % x;
+		int ans = 0;
+		for (int u = 1; u <= sccCnt; u++) {
+			if (hasBar[u]) {
+				ans = Math.max(ans, dp[u]);
 			}
 		}
+		return ans;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -205,22 +184,25 @@ public class Code05_MaximumSemi1 {
 		PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
 		n = in.nextInt();
 		m = in.nextInt();
-		x = in.nextInt();
 		for (int i = 1; i <= m; i++) {
 			a[i] = in.nextInt();
 			b[i] = in.nextInt();
 			addEdge(a[i], b[i]);
 		}
 		for (int i = 1; i <= n; i++) {
-			if (dfn[i] == 0) {
-				// tarjan1(i);
-				tarjan2(i);
-			}
+			money[i] = in.nextInt();
 		}
+		s = in.nextInt();
+		p = in.nextInt();
+		for (int i = 1, x; i <= p; i++) {
+			x = in.nextInt();
+			isBar[x] = true;
+		}
+		// tarjan1(s);
+		tarjan2(s);
 		condense();
-		dpOnDAG();
-		out.println(ans1);
-		out.println(ans2);
+		int ans = dpOnDAG();
+		out.println(ans);
 		out.flush();
 		out.close();
 	}

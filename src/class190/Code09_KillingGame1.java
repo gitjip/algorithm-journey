@@ -1,15 +1,16 @@
 package class190;
 
-// 最大半连通子图，java版
-// 有向图中节点u和v，只要其中一点能到达另一点，就说两点是半连通的
-// 如果一个有向图，任意两点都是半连通的，这样的有向图就是半连通图
-// 有向图中的一个点集，该点集中只要某两点在原图中有边，那么这条边就保留，则可以得到一个子图
-// 如果该子图既是半连通图，又有节点数量最多，那么这个子图就是原图的最大半连通子图
-// 给定一张n个点，m条边的有向图，打印最大半连通子图的大小
-// 可能存在多个最大半连通子图，打印这个数量，数量对给定的数字x取余
+// 杀人游戏，java版
+// 一共n个人，只有一个杀手，每个人是杀手的概率均等，其他人都是平民
+// 给定m个知晓关系，如果x知晓y，那么y是不是杀手，x就知道情况了
+// 知晓关系是单向且可传递的，比如a知晓b，b知晓c，那么a知晓c
+// 你可以盘问任何人，不仅能知道对方身份，并且对方知晓的所有情况都能获得
+// 但是如果你直接盘问到杀手的话，杀手会原地爆炸，炸死所有人
+// 你一定要确定所有人的身份，而且你充分了解知晓关系网，会用最优的盘问策略
+// 返回最优盘问策略下，杀手不爆炸还能被揪出来的概率，保留小数点后面6位
 // 1 <= n <= 10^5
-// 1 <= m <= 10^6
-// 测试链接 : https://www.luogu.com.cn/problem/P2272
+// 0 <= m <= 3 * 10^5
+// 测试链接 : https://www.luogu.com.cn/problem/P4819
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
@@ -18,11 +19,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
-public class Code05_MaximumSemi1 {
+public class Code09_KillingGame1 {
 
 	public static int MAXN = 100001;
-	public static int MAXM = 1000001;
-	public static int n, m, x;
+	public static int MAXM = 300001;
+	public static int n, m;
 	public static int[] a = new int[MAXM];
 	public static int[] b = new int[MAXM];
 
@@ -46,10 +47,6 @@ public class Code05_MaximumSemi1 {
 	public static int cnte;
 
 	public static int[] indegree = new int[MAXN];
-	public static int[] dpSum = new int[MAXN];
-	public static int[] dpCnt = new int[MAXN];
-
-	public static int ans1, ans2;
 
 	// 迭代版需要的栈，讲解118讲了递归改迭代的技巧
 	public static int[][] stack = new int[MAXN][3];
@@ -173,31 +170,36 @@ public class Code05_MaximumSemi1 {
 		}
 	}
 
-	public static void dpOnDAG() {
-		for (int u = sccCnt; u > 0; u--) {
-			if (indegree[u] == 0) {
-				dpSum[u] = sccSiz[u];
-				dpCnt[u] = 1;
-			}
-			for (int e = head[u]; e > 0; e = nxt[e]) {
-				int v = to[e];
-				if (dpSum[v] < dpSum[u] + sccSiz[v]) {
-					dpSum[v] = dpSum[u] + sccSiz[v];
-					dpCnt[v] = dpCnt[u];
-				} else if (dpSum[v] == dpSum[u] + sccSiz[v]) {
-					dpCnt[v] = (dpCnt[v] + dpCnt[u]) % x;
-				}
+	public static boolean isolated(int i) {
+		if (indegree[i] > 0 || sccSiz[i] > 1) {
+			return false;
+		}
+		if (head[i] == 0) {
+			return true;
+		}
+		for (int e = head[i]; e > 0; e = nxt[e]) {
+			int v = to[e];
+			if (indegree[v] == 1) {
+				return false;
 			}
 		}
-		ans1 = ans2 = 0;
+		return true;
+	}
+
+	public static double compute() {
+		int inZero = 0;
 		for (int i = 1; i <= sccCnt; i++) {
-			if (dpSum[i] > ans1) {
-				ans1 = dpSum[i];
-				ans2 = dpCnt[i];
-			} else if (dpSum[i] == ans1) {
-				ans2 = (ans2 + dpCnt[i]) % x;
+			if (indegree[i] == 0) {
+				inZero++;
 			}
 		}
+		for (int i = 1; i <= sccCnt; i++) {
+			if (isolated(i)) {
+				inZero--;
+				break;
+			}
+		}
+		return 1.0 - (double) inZero / n;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -205,7 +207,6 @@ public class Code05_MaximumSemi1 {
 		PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
 		n = in.nextInt();
 		m = in.nextInt();
-		x = in.nextInt();
 		for (int i = 1; i <= m; i++) {
 			a[i] = in.nextInt();
 			b[i] = in.nextInt();
@@ -218,9 +219,8 @@ public class Code05_MaximumSemi1 {
 			}
 		}
 		condense();
-		dpOnDAG();
-		out.println(ans1);
-		out.println(ans2);
+		double ans = compute();
+		out.printf("%.6f\n", ans);
 		out.flush();
 		out.close();
 	}
